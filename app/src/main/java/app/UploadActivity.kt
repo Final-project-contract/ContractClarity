@@ -64,7 +64,7 @@ class UploadActivity : AppCompatActivity() {
                 val pdfText = readPdfContent(uri)
                 val maxLength = 4000 // Adjust as needed
                 val truncatedText = if (pdfText.length > maxLength) pdfText.substring(0, maxLength) else pdfText
-
+//req
                 val request = MessageRequest(
                     model = "claude-3-5-sonnet-20240620",
                     max_tokens = 1000,
