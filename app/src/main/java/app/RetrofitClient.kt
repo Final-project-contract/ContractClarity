@@ -13,7 +13,7 @@ object RetrofitClient {
             .addInterceptor { chain ->
                 val original = chain.request()
                 val request = original.newBuilder()
-                    .header("x-api-key", "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")
+                    .header("x-api-key", "")
                     .header("anthropic-version", "2023-06-01")
                     .header("content-type", "application/json")
                     .method(original.method, original.body)
