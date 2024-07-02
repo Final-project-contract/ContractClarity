@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+
+
 }
 
 android {
@@ -8,6 +10,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
+
         applicationId = "com.example.final_project"
         minSdk = 25
         targetSdk = 34
@@ -50,6 +53,7 @@ android {
 }
 
 dependencies {
+    implementation ("com.itextpdf:itextpdf:5.5.13.2")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.10.0")

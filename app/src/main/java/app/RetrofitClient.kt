@@ -8,12 +8,12 @@ object RetrofitClient {
     private const val BASE_URL = "https://api.anthropic.com/"
 
     fun create(): AnthropicApi {
-
+        val apiKey = ApiKey().getKey()
         val client = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val original = chain.request()
                 val request = original.newBuilder()
-                    .header("x-api-key", "")
+                    .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
                     .header("content-type", "application/json")
                     .method(original.method, original.body)
