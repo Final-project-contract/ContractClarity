@@ -50,6 +50,8 @@ android {
 }
 
 dependencies {
+    implementation ("org.apache.pdfbox:pdfbox:2.0.25")
+    implementation ("com.tom_roush:pdfbox-android:2.0.27.0")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:okhttp:4.10.0")

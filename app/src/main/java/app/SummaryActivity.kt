@@ -1,8 +1,8 @@
 package app
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.example.final_project.R
 
 class SummaryActivity : AppCompatActivity() {
@@ -12,5 +12,6 @@ class SummaryActivity : AppCompatActivity() {
 
         val summaryTextView: TextView = findViewById(R.id.summaryTextView)
         summaryTextView.text = intent.getStringExtra("SUMMARY")
+
     }
 }
