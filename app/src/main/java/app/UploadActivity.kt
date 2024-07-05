@@ -8,9 +8,13 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import app.firebase.pdfFB
 import com.example.final_project.R
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import kotlinx.coroutines.launch
@@ -20,6 +24,7 @@ class UploadActivity : AppCompatActivity() {
     private lateinit var summaryTextView: TextView
     private lateinit var uploadButton: Button
     private lateinit var selectedFileTextView: TextView
+    val db = Firebase.firestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,12 +48,29 @@ class UploadActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            selectedFileTextView.setText("File Selected")
             data?.data?.let { uri ->
+                uploadFileToFirebase(uri)
                 summarizePdf(uri,this)
             }
         }
     }
+    private fun uploadFileToFirebase(fileUri: Uri?) {
+        pdfFB.uploadFileToFirebase(fileUri,
+            onSuccess = {
+                // Handle success
+                showToast("File Uploaded Successfully")
+            },
+            onFailure = { errorMsg ->
+                // Handle failure
+                showToast(errorMsg)
+            }
+        )
+    }
 
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
     private fun summarizePdf(pdfUri: Uri,context: Context) {
         lifecycleScope.launch {
             try {
@@ -73,15 +95,6 @@ class UploadActivity : AppCompatActivity() {
         }
     }
 
-//    private suspend fun extractPdfText(uri: Uri): String = withContext(Dispatchers.IO) {
-//        val parcelFileDescriptor = contentResolver.openFileDescriptor(uri, "r")
-//        val document = PDDocument.load(parcelFileDescriptor)
-//        val stripper = PDFTextStripper()
-//        val pdfText = stripper.getText(document)
-//        document.close()
-//        parcelFileDescriptor?.close()
-//        return@withContext pdfText
-//    }
 private fun uriToInputStream(context: Context, uri: Uri): InputStream? {
     return context.contentResolver.openInputStream(uri)
 }
@@ -97,7 +110,7 @@ private fun uriToInputStream(context: Context, uri: Uri): InputStream? {
                     role = "user",
                     content =listOf(
                         Content(
-                            text = "Summarize this text:$content",
+                            text = "Write a professional concise summary of the next contract to a customer without legal proficiency:$content",
                             type = "text"
                         )
                     )
@@ -111,15 +124,6 @@ private fun uriToInputStream(context: Context, uri: Uri): InputStream? {
         private val api = RetrofitClient.create()
     }
 
-
-//    private fun readPdfContent(uri: Uri): String {
-//        val inputStream = contentResolver.openInputStream(uri)
-//        val document = PDDocument.load(inputStream)
-//        val pdfStripper = PDFTextStripper()
-//        val text = pdfStripper.getText(document)
-//        document.close()
-//        return text
-//    }
     private fun extractData(inputStream: InputStream?): String {
         try {
             var extractedText = ""
