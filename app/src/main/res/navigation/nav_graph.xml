@@ -29,6 +29,12 @@
         android:label="Login Fragment"
         tools:layout="@layout/fragment_login">
         <!-- Define login fragment details -->
+        <action
+            android:id="@+id/action_loginFragment_self"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_uploadActivity"
+            app:destination="@id/uploadActivity" />
     </fragment>
 
     <fragment
@@ -37,6 +43,16 @@
         android:label="Register Fragment"
         tools:layout="@layout/fragment_register">
         <!-- Define register fragment details -->
+        <action
+            android:id="@+id/action_registerFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
+    <action android:id="@+id/action_global_loginFragment" app:destination="@id/loginFragment" />
+    <action android:id="@+id/action_global_registerFragment" app:destination="@id/registerFragment" />
+    <activity
+        android:id="@+id/uploadActivity"
+        android:name="app.UploadActivity"
+        android:label="activity_upload"
+        tools:layout="@layout/activity_upload" />
 
 </navigation>

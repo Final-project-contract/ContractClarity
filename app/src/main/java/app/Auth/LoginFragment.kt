@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.final_project.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -49,7 +50,8 @@ class LoginFragment : Fragment() {
                         // Login successful
                         val user = auth.currentUser
                         Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                        // TODO: Navigate to the main screen
+                        findNavController().navigate(R.id.action_loginFragment_to_uploadActivity)
+
                     } else {
                         // Login failed
                         Toast.makeText(context, "Login failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
