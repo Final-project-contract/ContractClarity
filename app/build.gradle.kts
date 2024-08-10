@@ -132,7 +132,7 @@ tasks {
 
     withType<ShadowJar> {
         manifest {
-            attributes(mapOf("Main-Class" to "app.Server.kt"))
+            attributes(mapOf("Main-Class" to "app.ServerMain"))
         }
         mergeServiceFiles()
         exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
@@ -140,7 +140,7 @@ tasks {
 
     register<JavaExec>("runServer") {
         group = "run"
-        mainClass.set("app.Server.kt")
+        mainClass.set("app.ServerMain")
         classpath = files(
             configurations.getByName("runtimeClasspath")
         )
