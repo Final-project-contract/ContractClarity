@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -32,11 +34,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
@@ -49,7 +51,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/INDEX.LIST"
             excludes += "/META-INF/io.netty.versions.properties"
-
         }
     }
 }
@@ -128,8 +129,38 @@ tasks.create("stage") {
     dependsOn("shadowJar")
 }
 
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+// Correctly configure the shadowJar task
+tasks.withType<ShadowJar> {
     manifest {
-        attributes(mapOf("Main-Class" to "com.example.final_project.ServerKt"))
+        attributes(mapOf("Main-Class" to "app.ServerKt"))
     }
+    mergeServiceFiles()
+    exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
+}
+
+android.applicationVariants.all {
+    val variantName = name
+    tasks.register<Jar>("jar$variantName") {
+        dependsOn("assemble$variantName")
+
+        from(layout.buildDirectory.dir("intermediates/classes/$variantName"))
+        from(layout.buildDirectory.dir("intermediates/runtime_library_classes/$variantName"))
+
+        // Access runtimeClasspath via the variant's runtimeConfiguration
+        val runtimeClasspath = configurations.getByName("${variantName}RuntimeClasspath")
+        from(runtimeClasspath.map { if (it.isDirectory) it else zipTree(it) })
+
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest {
+            attributes(mapOf("Main-Class" to "app.ServerKt"))
+        }
+        archiveBaseName.set("app-$variantName")
+    }
+}
+
+
+tasks.register<JavaExec>("runServer") {
+    group = "run"
+    mainClass.set("app.ServerKt")
+    classpath = sourceSets["main"].runtimeClasspath
 }
