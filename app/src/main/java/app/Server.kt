@@ -18,6 +18,7 @@ import io.ktor.serialization.gson.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import org.slf4j.LoggerFactory
+import java.net.URI
 
 object Server {
     private val logger = LoggerFactory.getLogger(Server::class.java)
@@ -178,18 +179,23 @@ object Server {
     }
 
     private fun Application.configureDatabase() {
+        val dbUrl = System.getenv("DATABASE_URL")
+        val dbUri = URI(dbUrl)
+        val username = dbUri.userInfo.split(":")[0]
+        val password = dbUri.userInfo.split(":")[1]
+        val jdbcUrl = "jdbc:postgresql://${dbUri.host}:${dbUri.port}${dbUri.path}?sslmode=require"
+
         Database.connect(
-            url = "jdbc:postgresql://localhost:5432/contract_management",
+            url = jdbcUrl,
             driver = "org.postgresql.Driver",
-            user = "postgres",
-            password = "235689"
+            user = username,
+            password = password
         )
 
         transaction {
             SchemaUtils.create(Users, Contracts, ContractSummaries)
         }
     }
-
     private fun createJwtToken(userId: Int): String {
         return JWT.create()
             .withAudience(AUDIENCE)
