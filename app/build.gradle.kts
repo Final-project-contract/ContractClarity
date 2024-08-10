@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -130,7 +128,7 @@ tasks {
         dependsOn("shadowJar")
     }
 
-    withType<ShadowJar> {
+    withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
         manifest {
             attributes(mapOf("Main-Class" to "app.ServerMain"))
         }
