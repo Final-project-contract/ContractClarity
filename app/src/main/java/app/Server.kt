@@ -82,17 +82,22 @@ object Server {
             post("/register") {
                 try {
                     val user = call.receive<User>()
+                    logger.info("Received registration request for user: ${user.email}")
                     val userId = userDao.create(user)
                     if (userId != null) {
+                        logger.info("User registered successfully: $userId")
                         call.respond(HttpStatusCode.Created, mapOf("userId" to userId))
                     } else {
+                        logger.warn("Registration failed for user: ${user.email}")
                         call.respond(HttpStatusCode.BadRequest, "Registration failed")
                     }
                 } catch (e: Exception) {
                     logger.error("Error in registration: ${e.message}")
+                    e.printStackTrace()
                     call.respond(HttpStatusCode.InternalServerError, "An error occurred during registration")
                 }
             }
+
 
             post("/login") {
                 try {
@@ -189,7 +194,7 @@ object Server {
     }
 
     private fun Application.configureDatabase() {
-        val dbUrl = System.getenv("DATABASE_URL")
+        val dbUrl = "postgres://u3muoju0j6oajo:pfcfb2100486e690377ab4266f1c5a4af296db4180e09961058a77a34745c000c@cat670aihdrkt1.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d5amu549gim58e"
         val dbUri = URI(dbUrl)
         val username = dbUri.userInfo.split(":")[0]
         val password = dbUri.userInfo.split(":")[1]
@@ -205,7 +210,9 @@ object Server {
         transaction {
             SchemaUtils.create(Users, Contracts, ContractSummaries)
         }
+        logger.info("Database configured successfully")
     }
+
     private fun createJwtToken(userId: Int): String {
         return JWT.create()
             .withAudience(AUDIENCE)
