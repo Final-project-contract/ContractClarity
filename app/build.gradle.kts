@@ -34,11 +34,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -125,40 +125,24 @@ configurations.all {
     }
 }
 
-tasks.create("stage") {
-    dependsOn("shadowJar")
-}
-
-// Correctly configure the shadowJar task
-tasks.withType<ShadowJar> {
-    manifest {
-        attributes(mapOf("Main-Class" to "app.ServerKt"))
+tasks {
+    create("stage") {
+        dependsOn("shadowJar")
     }
-    mergeServiceFiles()
-    exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
-}
 
-android.applicationVariants.all {
-    val variantName = name
-    tasks.register<Jar>("jar$variantName") {
-        dependsOn("assemble$variantName")
-
-        from(layout.buildDirectory.dir("intermediates/classes/$variantName"))
-        from(layout.buildDirectory.dir("intermediates/runtime_library_classes/$variantName"))
-
-        val runtimeClasspath = configurations.getByName("${variantName}RuntimeClasspath")
-        from(runtimeClasspath.map { if (it.isDirectory) it else zipTree(it) })
-
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    withType<ShadowJar> {
         manifest {
             attributes(mapOf("Main-Class" to "app.ServerKt"))
         }
-        archiveBaseName.set("app-$variantName")
+        mergeServiceFiles()
+        exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
     }
-}
 
-tasks.register<JavaExec>("runServer") {
-    group = "run"
-    mainClass.set("app.ServerKt")
-    classpath = sourceSets["main"].runtimeClasspath
+    register<JavaExec>("runServer") {
+        group = "run"
+        mainClass.set("app.ServerKt")
+        classpath = files(
+            configurations.getByName("runtimeClasspath")
+        )
+    }
 }
