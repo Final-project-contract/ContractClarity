@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 android {
@@ -156,7 +156,6 @@ android.applicationVariants.all {
         archiveBaseName.set("app-$variantName")
     }
 }
-
 
 tasks.register<JavaExec>("runServer") {
     group = "run"
