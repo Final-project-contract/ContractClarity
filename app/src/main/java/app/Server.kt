@@ -16,6 +16,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 import io.ktor.serialization.gson.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
 import org.slf4j.LoggerFactory
 
 object Server {
@@ -30,14 +31,36 @@ object Server {
 
     fun start() {
         val port = System.getenv("PORT")?.toInt() ?: 8080
-        embeddedServer(Netty, port = port) {
+        embeddedServer(Netty, port = port, host = "0.0.0.0") {
+            install(CORS) {
+                anyHost()
+                allowMethod(HttpMethod.Options)
+                allowMethod(HttpMethod.Put)
+                allowMethod(HttpMethod.Patch)
+                allowMethod(HttpMethod.Delete)
+                allowHeader(HttpHeaders.Authorization)
+                allowHeader(HttpHeaders.ContentType)
+            }
             install(ContentNegotiation) {
                 gson {
                     setPrettyPrinting()
                 }
             }
-            install(Authentication)
-            configureSecurity()
+            install(Authentication) {
+                jwt {
+                    realm = REALM
+                    verifier(
+                        JWT
+                            .require(Algorithm.HMAC256(secret))
+                            .withAudience(AUDIENCE)
+                            .withIssuer(ISSUER)
+                            .build()
+                    )
+                    validate { credential ->
+                        if (credential.payload.audience.contains(AUDIENCE)) JWTPrincipal(credential.payload) else null
+                    }
+                }
+            }
             configureRouting()
             configureDatabase()
         }.start(wait = true)
@@ -154,24 +177,6 @@ object Server {
         }
     }
 
-    private fun Application.configureSecurity() {
-        authentication {
-            jwt {
-                realm = REALM
-                verifier(
-                    JWT
-                        .require(Algorithm.HMAC256(secret))
-                        .withAudience(AUDIENCE)
-                        .withIssuer(ISSUER)
-                        .build()
-                )
-                validate { credential ->
-                    if (credential.payload.audience.contains(AUDIENCE)) JWTPrincipal(credential.payload) else null
-                }
-            }
-        }
-    }
-
     private fun Application.configureDatabase() {
         Database.connect(
             url = "jdbc:postgresql://localhost:5432/contract_management",
@@ -196,5 +201,6 @@ object Server {
 }
 
 fun main() {
+    println("Starting server on port 8080...")
     Server.start()
 }

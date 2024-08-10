@@ -11,9 +11,10 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import app.TokenManager
 import com.example.final_project.R
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -47,7 +48,7 @@ class LoginFragment : Fragment() {
         val password = editTextPassword.text.toString().trim()
 
         if (email.isNotEmpty() && password.isNotEmpty()) {
-            GlobalScope.launch(Dispatchers.IO) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val client = HttpClient()
                     val response: HttpResponse = client.post("http://10.0.2.2:8080/login") {
@@ -58,18 +59,18 @@ class LoginFragment : Fragment() {
                         val jsonBody = JSONObject(response.bodyAsText())
                         val token = jsonBody.getString("token")
                         tokenManager.saveToken(token)
-                        launch(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
                             findNavController().navigate(R.id.action_loginFragment_to_uploadActivity)
                         }
                     } else {
-                        launch(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                     client.close()
                 } catch (e: Exception) {
-                    launch(Dispatchers.Main) {
+                    withContext(Dispatchers.Main) {
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }

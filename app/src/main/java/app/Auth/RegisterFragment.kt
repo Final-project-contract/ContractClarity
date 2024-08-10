@@ -10,9 +10,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.final_project.R
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -52,7 +53,7 @@ class RegisterFragment : Fragment() {
         val industry = editTextIndustry.text.toString().trim()
 
         if (validateInputs(fullName, email, password, industry)) {
-            GlobalScope.launch(Dispatchers.IO) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val client = HttpClient()
                     val response: HttpResponse = client.post("http://10.0.2.2:8080/register") {
@@ -67,18 +68,18 @@ class RegisterFragment : Fragment() {
                         """.trimIndent())
                     }
                     if (response.status.isSuccess()) {
-                        launch(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
                             findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
                         }
                     } else {
-                        launch(Dispatchers.Main) {
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Registration failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                     client.close()
                 } catch (e: Exception) {
-                    launch(Dispatchers.Main) {
+                    withContext(Dispatchers.Main) {
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
@@ -92,6 +93,7 @@ class RegisterFragment : Fragment() {
         password: String,
         industry: String
     ): Boolean {
+
         // Validate full name (required)
         if (fullName.isEmpty()) {
             editTextFullName.error = "Full Name is required"

@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.final_project"
-        minSdk = 25
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -47,6 +47,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+
         }
     }
 }
@@ -85,6 +88,7 @@ dependencies {
     // Ktor client
     implementation("io.ktor:ktor-client-android:2.3.7")
     implementation("io.ktor:ktor-client-serialization:2.3.7")
+    implementation("io.ktor:ktor-server-cors:2.3.7")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
