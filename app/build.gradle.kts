@@ -146,7 +146,6 @@ android.applicationVariants.all {
         from(layout.buildDirectory.dir("intermediates/classes/$variantName"))
         from(layout.buildDirectory.dir("intermediates/runtime_library_classes/$variantName"))
 
-        // Access runtimeClasspath via the variant's runtimeConfiguration
         val runtimeClasspath = configurations.getByName("${variantName}RuntimeClasspath")
         from(runtimeClasspath.map { if (it.isDirectory) it else zipTree(it) })
 
