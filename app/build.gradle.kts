@@ -124,16 +124,16 @@ configurations.all {
 }
 
 tasks {
-    create("stage") {
-        dependsOn("shadowJar")
-    }
-
-    withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+    val shadowJar by creating(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
         manifest {
             attributes(mapOf("Main-Class" to "app.ServerMain"))
         }
         mergeServiceFiles()
         exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
+    }
+
+    create("stage") {
+        dependsOn(shadowJar)
     }
 
     register<JavaExec>("runServer") {
