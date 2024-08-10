@@ -18,7 +18,7 @@ object RetrofitClient {
                     .header("x-api-key", apiKey)
                     .header("anthropic-version", "2023-06-01")
                     .header("content-type", "application/json")
-                    .method(original.method, original.body)
+                    .method(original.method(), original.body())
                     .build()
                 chain.proceed(request)
             }

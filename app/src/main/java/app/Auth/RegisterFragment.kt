@@ -10,9 +10,14 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.final_project.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 
 class RegisterFragment : Fragment() {
 
@@ -21,15 +26,12 @@ class RegisterFragment : Fragment() {
     private lateinit var editTextPassword: EditText
     private lateinit var editTextIndustry: EditText
     private lateinit var buttonRegister: Button
-    private lateinit var auth: FirebaseAuth
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_register, container, false)
-
-        auth = Firebase.auth
 
         editTextFullName = view.findViewById(R.id.editTextFullName)
         editTextEmail = view.findViewById(R.id.editTextEmail)
@@ -51,23 +53,37 @@ class RegisterFragment : Fragment() {
         val industry = editTextIndustry.text.toString().trim()
 
         if (validateInputs(fullName, email, password, industry)) {
-            auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(requireActivity()) { task ->
-                    if (task.isSuccessful) {
-                        // Registration successful
-                        val user = auth.currentUser
-                        Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
-                        findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
-
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val client = HttpClient()
+                    val response: HttpResponse = client.post("http://10.0.2.2:8080/register") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""
+                            {
+                                "fullName":"$fullName",
+                                "email":"$email",
+                                "password":"$password",
+                                "industry":"$industry"
+                            }
+                        """.trimIndent())
+                    }
+                    if (response.status.isSuccess()) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
+                            findNavController().navigate(R.id.action_registerFragment_to_loginFragment)
+                        }
                     } else {
-                        // Registration failed
-                        Toast.makeText(context, "Registration failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "Registration failed", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    client.close()
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
-//            println("Full Name: $fullName")
-//            println("Email: $email")
-//            println("Password: $password")
-//            println("Industry: $industry")
+            }
         }
     }
 
@@ -77,6 +93,7 @@ class RegisterFragment : Fragment() {
         password: String,
         industry: String
     ): Boolean {
+
         // Validate full name (required)
         if (fullName.isEmpty()) {
             editTextFullName.error = "Full Name is required"

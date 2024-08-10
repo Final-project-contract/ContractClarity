@@ -14,7 +14,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Final_Project"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
+
+
 
         <activity
             android:name="app.SummaryActivity"

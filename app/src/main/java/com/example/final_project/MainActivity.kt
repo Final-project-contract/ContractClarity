@@ -11,10 +11,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.final_project.ui.theme.Final_ProjectTheme
+import app.Server
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        GlobalScope.launch(Dispatchers.IO) {
+            Server.start()
+        }
+
         setContent {
             Final_ProjectTheme {
                 // A surface container using the 'background' color from the theme
