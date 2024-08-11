@@ -1,1 +1,1 @@
-web: java -jar server/build/libs/app.jar
+web: java -jar server/build/libs/server.jar
