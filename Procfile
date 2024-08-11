@@ -1,1 +1,1 @@
-web: java -jar server/build/libs/server.jar
+web: ./gradlew :server:shadowJar && java -jar server/build/libs/server.jar
