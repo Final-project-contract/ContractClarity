@@ -92,11 +92,15 @@ dependencies {
     // Jackson
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
+
+    implementation ("com.google.guava:guava:31.1-android")
+    implementation ("androidx.profileinstaller:profileinstaller:1.0.0")
+
 }
 
 configurations.all {
     resolutionStrategy {
-        force("com.google.guava:guava:30.1-android")
+        force("com.google.guava:guava:31.1-android")
         force("com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava")
     }
 }
