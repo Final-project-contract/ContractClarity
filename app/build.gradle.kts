@@ -2,7 +2,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 android {
@@ -56,7 +55,7 @@ android {
 dependencies {
     implementation("com.google.android.material:material:1.5.0")
     implementation("com.itextpdf:itextpdf:5.5.13.2")
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
@@ -69,35 +68,15 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
 
-    // Ktor server dependencies
-    implementation("io.ktor:ktor-server-core:2.3.7")
-    implementation("io.ktor:ktor-server-netty:2.3.7")
-    implementation("io.ktor:ktor-server-content-negotiation:2.3.7")
-    implementation("io.ktor:ktor-serialization-gson:2.3.7")
-    implementation("io.ktor:ktor-server-auth:2.3.7")
-    implementation("io.ktor:ktor-server-auth-jwt:2.3.7")
-
-    // Database
-    implementation("org.jetbrains.exposed:exposed-core:0.41.1")
-    implementation("org.jetbrains.exposed:exposed-dao:0.41.1")
-    implementation("org.jetbrains.exposed:exposed-jdbc:0.41.1")
-    implementation("org.postgresql:postgresql:42.6.0")
-    implementation("com.zaxxer:HikariCP:5.0.1")
-
     // Ktor client
     implementation("io.ktor:ktor-client-android:2.3.7")
     implementation("io.ktor:ktor-client-serialization:2.3.7")
-    implementation("io.ktor:ktor-server-cors:2.3.7")
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
 
     // Security
-    implementation("androidx.security:security-crypto:1.1.0-alpha03")
-    implementation("org.mindrot:jbcrypt:0.4")
-
-    // Logging
-    implementation("ch.qos.logback:logback-classic:1.2.6")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
@@ -120,27 +99,5 @@ configurations.all {
     resolutionStrategy {
         force("com.google.guava:guava:30.1-android")
         force("com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava")
-    }
-}
-
-tasks {
-    val shadowJar by creating(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
-        manifest {
-            attributes(mapOf("Main-Class" to "app.ServerMain"))
-        }
-        mergeServiceFiles()
-        exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
-    }
-
-    create("stage") {
-        dependsOn(shadowJar)
-    }
-
-    register<JavaExec>("runServer") {
-        group = "run"
-        mainClass.set("app.ServerMain")
-        classpath = files(
-            configurations.getByName("runtimeClasspath")
-        )
     }
 }

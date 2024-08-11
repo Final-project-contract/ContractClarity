@@ -1,4 +1,4 @@
-package app
+package com.example.server
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
@@ -83,7 +83,7 @@ object Server {
                 try {
                     val user = call.receive<User>()
                     logger.info("Received registration request for user: ${user.email}")
-                    val userId = userDao.create(user)
+                    val userId = com.example.server.Server.userDao.create(user)
                     if (userId != null) {
                         logger.info("User registered successfully: $userId")
                         call.respond(HttpStatusCode.Created, mapOf("userId" to userId))
@@ -100,7 +100,7 @@ object Server {
             post("/login") {
                 try {
                     val user = call.receive<User>()
-                    val userId = userDao.authenticate(user.email, user.password)
+                    val userId = com.example.server.Server.userDao.authenticate(user.email, user.password)
                     if (userId != null) {
                         val token = createJwtToken(userId)
                         call.respond(mapOf("token" to token))
@@ -122,7 +122,7 @@ object Server {
                             return@post
                         }
                         val contract = call.receive<Contract>()
-                        val contractId = contractDao.create(contract.copy(userId = userId))
+                        val contractId = com.example.server.Server.contractDao.create(contract.copy(userId = userId))
                         if (contractId != null) {
                             call.respond(HttpStatusCode.Created, mapOf("contractId" to contractId))
                         } else {
@@ -141,7 +141,7 @@ object Server {
                             call.respond(HttpStatusCode.Unauthorized, "Invalid token")
                             return@get
                         }
-                        val contracts = contractDao.findByUserId(userId)
+                        val contracts = com.example.server.Server.contractDao.findByUserId(userId)
                         call.respond(contracts)
                     } catch (e: Exception) {
                         logger.error("Error fetching contracts: ${e.message}")
@@ -157,7 +157,7 @@ object Server {
                             return@post
                         }
                         val summary = call.receive<ContractSummary>()
-                        val summaryId = contractSummaryDao.create(summary.copy(contractId = contractId))
+                        val summaryId = com.example.server.Server.contractSummaryDao.create(summary.copy(contractId = contractId))
                         if (summaryId != null) {
                             call.respond(HttpStatusCode.Created, mapOf("summaryId" to summaryId))
                         } else {
@@ -176,7 +176,7 @@ object Server {
                             call.respond(HttpStatusCode.BadRequest, "Invalid contract ID")
                             return@get
                         }
-                        val summary = contractSummaryDao.findByContractId(contractId)
+                        val summary = com.example.server.Server.contractSummaryDao.findByContractId(contractId)
                         if (summary != null) {
                             call.respond(summary)
                         } else {
@@ -206,7 +206,11 @@ object Server {
         )
 
         transaction {
-            SchemaUtils.create(Users, Contracts, ContractSummaries)
+            SchemaUtils.create(
+                com.example.server.Users,
+                com.example.server.Contracts,
+                com.example.server.ContractSummaries
+            )
         }
         logger.info("Database configured successfully")
     }
