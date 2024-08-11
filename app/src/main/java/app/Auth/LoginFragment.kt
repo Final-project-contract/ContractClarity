@@ -8,17 +8,21 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.TokenManager
 import com.example.final_project.R
-import androidx.lifecycle.lifecycleScope
+import io.ktor.client.HttpClient
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
 import org.json.JSONObject
 
 class LoginFragment : Fragment() {
@@ -26,6 +30,11 @@ class LoginFragment : Fragment() {
     private lateinit var editTextPassword: EditText
     private lateinit var buttonLogin: Button
     private lateinit var tokenManager: TokenManager
+
+
+    companion object {
+        private const val BASE_URL = "https://contractclarity-e30d2227fa32.herokuapp.com/"
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,7 +60,7 @@ class LoginFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val client = HttpClient()
-                    val response: HttpResponse = client.post("http://10.0.2.2:8080/login") {
+                    val response: HttpResponse = client.post("$BASE_URL/login") {
                         contentType(ContentType.Application.Json)
                         setBody("""{"email":"$email","password":"$password"}""")
                     }

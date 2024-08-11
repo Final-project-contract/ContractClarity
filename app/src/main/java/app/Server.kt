@@ -93,11 +93,9 @@ object Server {
                     }
                 } catch (e: Exception) {
                     logger.error("Error in registration: ${e.message}")
-                    e.printStackTrace()
                     call.respond(HttpStatusCode.InternalServerError, "An error occurred during registration")
                 }
             }
-
 
             post("/login") {
                 try {
@@ -194,7 +192,7 @@ object Server {
     }
 
     private fun Application.configureDatabase() {
-        val dbUrl = "postgres://u3muoju0j6oajo:pfcfb2100486e690377ab4266f1c5a4af296db4180e09961058a77a34745c000c@cat670aihdrkt1.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d5amu549gim58e"
+        val dbUrl = System.getenv("DATABASE_URL") ?: "postgres://u3muoju0j6oajo:pfcfb2100486e690377ab4266f1c5a4af296db4180e09961058a77a34745c000c@cat670aihdrkt1.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d5amu549gim58e"
         val dbUri = URI(dbUrl)
         val username = dbUri.userInfo.split(":")[0]
         val password = dbUri.userInfo.split(":")[1]
@@ -227,3 +225,4 @@ fun main() {
     println("Starting server on port 8080...")
     Server.start()
 }
+

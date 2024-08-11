@@ -31,7 +31,6 @@ class RegisterFragment : Fragment() {
     private lateinit var editTextIndustry: EditText
     private lateinit var buttonRegister: Button
 
-    // Use a companion object to store the base URL
     companion object {
         private const val BASE_URL = "https://contractclarity-e30d2227fa32.herokuapp.com/"
     }
@@ -77,7 +76,6 @@ class RegisterFragment : Fragment() {
                     """.trimIndent())
                     }
 
-                    // Log the response status and body
                     println("Response status: ${response.status}")
                     println("Response body: ${response.bodyAsText()}")
 
@@ -101,9 +99,7 @@ class RegisterFragment : Fragment() {
                 }
             }
         }
-
-
-}
+    }
 
     private fun validateInputs(
         fullName: String,
@@ -111,27 +107,22 @@ class RegisterFragment : Fragment() {
         password: String,
         industry: String
     ): Boolean {
-
-        // Validate full name (required)
         if (fullName.isEmpty()) {
             editTextFullName.error = "Full Name is required"
             return false
         }
 
-        // Validate email (required and valid format)
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         if (email.isEmpty() || !email.matches(emailPattern.toRegex())) {
             editTextEmail.error = "Enter a valid email address"
             return false
         }
 
-        // Validate password (at least 6 characters)
         if (password.length < 6) {
             editTextPassword.error = "Password must be at least 6 characters"
             return false
         }
 
-        // Validate industry (required)
         if (industry.isEmpty()) {
             editTextIndustry.error = "Industry is required"
             return false
