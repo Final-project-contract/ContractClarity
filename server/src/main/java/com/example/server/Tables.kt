@@ -1,4 +1,4 @@
-package app
+package com.example.server
 
 import org.jetbrains.exposed.sql.Table
 

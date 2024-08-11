@@ -1,4 +1,4 @@
-package app
+package com.example.server
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -8,10 +8,10 @@ class UserDao {
     fun create(user: User): Int? {
         return transaction {
             Users.insert {
-                it[email] = user.email
-                it[password] = BCrypt.hashpw(user.password, BCrypt.gensalt())
-                it[fullName] = user.fullName
-                it[industry] = user.industry
+                it[Users.email] = user.email
+                it[Users.password] = BCrypt.hashpw(user.password, BCrypt.gensalt())
+                it[Users.fullName] = user.fullName
+                it[Users.industry] = user.industry
             } get Users.id
         }
     }

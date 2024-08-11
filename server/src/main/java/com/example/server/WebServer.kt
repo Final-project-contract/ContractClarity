@@ -1,4 +1,4 @@
-package app
+package com.example.server
 
 import io.ktor.server.application.call
 import io.ktor.server.engine.embeddedServer
