@@ -2,6 +2,7 @@ package com.example.server
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -20,6 +21,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -79,11 +81,19 @@ object Server {
 
     private fun Application.configureRouting() {
         routing {
+            get("/") {
+                call.respondText("ContractClarity API is running!", contentType = ContentType.Text.Plain)
+            }
+
+            get("/health") {
+                call.respondText("OK", contentType = ContentType.Text.Plain)
+            }
+
             post("/register") {
                 try {
                     val user = call.receive<User>()
                     logger.info("Received registration request for user: ${user.email}")
-                    val userId = com.example.server.Server.userDao.create(user)
+                    val userId = userDao.create(user)
                     if (userId != null) {
                         logger.info("User registered successfully: $userId")
                         call.respond(HttpStatusCode.Created, mapOf("userId" to userId))
@@ -100,7 +110,7 @@ object Server {
             post("/login") {
                 try {
                     val user = call.receive<User>()
-                    val userId = com.example.server.Server.userDao.authenticate(user.email, user.password)
+                    val userId = userDao.authenticate(user.email, user.password)
                     if (userId != null) {
                         val token = createJwtToken(userId)
                         call.respond(mapOf("token" to token))
@@ -122,7 +132,7 @@ object Server {
                             return@post
                         }
                         val contract = call.receive<Contract>()
-                        val contractId = com.example.server.Server.contractDao.create(contract.copy(userId = userId))
+                        val contractId = contractDao.create(contract.copy(userId = userId))
                         if (contractId != null) {
                             call.respond(HttpStatusCode.Created, mapOf("contractId" to contractId))
                         } else {
@@ -141,7 +151,7 @@ object Server {
                             call.respond(HttpStatusCode.Unauthorized, "Invalid token")
                             return@get
                         }
-                        val contracts = com.example.server.Server.contractDao.findByUserId(userId)
+                        val contracts = contractDao.findByUserId(userId)
                         call.respond(contracts)
                     } catch (e: Exception) {
                         logger.error("Error fetching contracts: ${e.message}")
@@ -157,7 +167,7 @@ object Server {
                             return@post
                         }
                         val summary = call.receive<ContractSummary>()
-                        val summaryId = com.example.server.Server.contractSummaryDao.create(summary.copy(contractId = contractId))
+                        val summaryId = contractSummaryDao.create(summary.copy(contractId = contractId))
                         if (summaryId != null) {
                             call.respond(HttpStatusCode.Created, mapOf("summaryId" to summaryId))
                         } else {
@@ -176,7 +186,7 @@ object Server {
                             call.respond(HttpStatusCode.BadRequest, "Invalid contract ID")
                             return@get
                         }
-                        val summary = com.example.server.Server.contractSummaryDao.findByContractId(contractId)
+                        val summary = contractSummaryDao.findByContractId(contractId)
                         if (summary != null) {
                             call.respond(summary)
                         } else {
@@ -192,7 +202,7 @@ object Server {
     }
 
     private fun Application.configureDatabase() {
-        val dbUrl = System.getenv("DATABASE_URL") ?: "postgres://u3muoju0j6oajo:pfcfb2100486e690377ab4266f1c5a4af296db4180e09961058a77a34745c000c@cat670aihdrkt1.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d5amu549gim58e"
+        val dbUrl = System.getenv("DATABASE_URL") ?: throw IllegalStateException("DATABASE_URL must be set")
         val dbUri = URI(dbUrl)
         val username = dbUri.userInfo.split(":")[0]
         val password = dbUri.userInfo.split(":")[1]
@@ -206,11 +216,7 @@ object Server {
         )
 
         transaction {
-            SchemaUtils.create(
-                com.example.server.Users,
-                com.example.server.Contracts,
-                com.example.server.ContractSummaries
-            )
+            SchemaUtils.create(Users, Contracts, ContractSummaries)
         }
         logger.info("Database configured successfully")
     }
@@ -226,7 +232,6 @@ object Server {
 }
 
 fun main() {
-    println("Starting server on port 8080...")
+    println("Starting server...")
     Server.start()
 }
-

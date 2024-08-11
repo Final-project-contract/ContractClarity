@@ -1,7 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.9.0"
+    kotlin("jvm")
     application
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.github.johnrengelman.shadow")
 }
 
 application {
@@ -13,19 +13,11 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-sourceSets {
-    main {
-        java.srcDirs("src/main/java")
-        kotlin.srcDirs("src/main/java")
-    }
-}
-
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
         jvmTarget = "17"
     }
 }
-
 
 dependencies {
     implementation("io.ktor:ktor-server-core:2.3.7")
@@ -54,13 +46,15 @@ tasks {
         manifest {
             attributes(Pair("Main-Class", "com.example.server.ServerMain"))
         }
-        archiveBaseName.set("app")
+        archiveBaseName.set("server")
         archiveClassifier.set("")
         archiveVersion.set("")
-        mergeServiceFiles()
-
-        from(sourceSets.main.get().output)
-        configurations = listOf(project.configurations.runtimeClasspath.get())
     }
 }
+
+tasks.register("stage") {
+    dependsOn("shadowJar")
+}
+
+
 
