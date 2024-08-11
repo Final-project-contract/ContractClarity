@@ -14,12 +14,16 @@ import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
+import io.ktor.client.HttpClient
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import java.io.InputStream
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
 
 class UploadActivity : AppCompatActivity() {
     private lateinit var summaryTextView: TextView
@@ -64,7 +68,7 @@ class UploadActivity : AppCompatActivity() {
             try {
                 val token = tokenManager.getToken() ?: throw Exception("No token found")
                 val client = HttpClient()
-                val response: HttpResponse = client.post("http://10.0.2.2:8080/contracts") {
+                val response: HttpResponse = client.post("https://contractclarity-e30d2227fa32.herokuapp.com/contracts") {
                     header("Authorization", "Bearer $token")
                     contentType(ContentType.Application.Json)
                     setBody("""
@@ -160,3 +164,4 @@ class UploadActivity : AppCompatActivity() {
         private val api = RetrofitClient.create()
     }
 }
+
