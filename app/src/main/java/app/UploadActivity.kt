@@ -1,7 +1,6 @@
 package app
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,21 +13,14 @@ import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
-import io.ktor.client.HttpClient
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Contract
 import java.io.InputStream
 
 class UploadActivity : AppCompatActivity() {
-    private lateinit var summaryTextView: TextView
     private lateinit var uploadButton: Button
     private lateinit var selectedFileTextView: TextView
+    private lateinit var summaryTextView: TextView
     private lateinit var tokenManager: TokenManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,17 +40,16 @@ class UploadActivity : AppCompatActivity() {
     private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "application/pdf"
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
         startActivityForResult(Intent.createChooser(intent, "Select a PDF file"), FILE_PICKER_REQUEST_CODE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            selectedFileTextView.text = "File Selected"
             data?.data?.let { uri ->
+                selectedFileTextView.text = "File Selected"
                 uploadContractToServer(uri)
-                summarizePdf(uri, this)
+                summarizePdf(uri)
             }
         }
     }
@@ -67,64 +58,48 @@ class UploadActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val token = tokenManager.getToken() ?: throw Exception("No token found")
-                val client = HttpClient()
-                val response: HttpResponse = client.post("https://contractclarity-e30d2227fa32.herokuapp.com/contracts") {
-                    header("Authorization", "Bearer $token")
-                    contentType(ContentType.Application.Json)
-                    setBody("""
-                        {
-                            "name": "${fileUri.lastPathSegment}",
-                            "url": "${fileUri}"
-                        }
-                    """.trimIndent())
-                }
-                if (response.status.isSuccess()) {
+                val contract = Contract(0, fileUri.lastPathSegment ?: "Unknown", fileUri.toString())
+                val response = HerokuRetrofitClient.herokuApi.uploadContract("Bearer $token", contract)
+                if (response.isSuccessful) {
                     showToast("Contract uploaded successfully")
                 } else {
-                    showToast("Failed to upload contract")
+                    showToast("Failed to upload contract: ${response.message()}")
                 }
-                client.close()
             } catch (e: Exception) {
                 showToast("Error: ${e.message}")
             }
         }
     }
 
-    private fun summarizePdf(pdfUri: Uri, context: Context) {
+    private fun summarizePdf(pdfUri: Uri) {
         lifecycleScope.launch {
             try {
-                val inputStream = uriToInputStream(context, pdfUri)
-                val pdfText: String = extractData(inputStream)
-                Log.d("Extracted Text", pdfText)
+                val inputStream = contentResolver.openInputStream(pdfUri)
+                val pdfText = extractTextFromPdf(inputStream)
                 val request = createMessageRequest(pdfText)
-                val response = api.createMessage(request)
+                val response = RetrofitClient.create().createMessage(request)
                 val summary = response.content.firstOrNull()?.text ?: "No summary available"
-
-                runOnUiThread {
-                    summaryTextView.text = summary
-                }
+                summaryTextView.text = summary
             } catch (e: Exception) {
-                e.printStackTrace()
-                val errorBody = if (e is retrofit2.HttpException) e.response()?.errorBody()?.string() else null
-                runOnUiThread {
-                    summaryTextView.text = "Error: ${e.message}\nError Body: $errorBody"
-                }
+                Log.e("UploadActivity", "Error summarizing PDF", e)
+                showToast("Error summarizing PDF: ${e.message}")
             }
         }
     }
 
-    private fun showToast(message: String) {
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun uriToInputStream(context: Context, uri: Uri): InputStream? {
-        return context.contentResolver.openInputStream(uri)
+    private fun extractTextFromPdf(inputStream: InputStream?): String {
+        return inputStream?.use { stream ->
+            val reader = PdfReader(stream)
+            val numPages = reader.numberOfPages
+            buildString {
+                for (i in 1..numPages) {
+                    append(PdfTextExtractor.getTextFromPage(reader, i))
+                }
+            }
+        } ?: throw IllegalArgumentException("Cannot read PDF file")
     }
 
     private fun createMessageRequest(content: String): MessageRequest {
-        Log.d("Content", content)
         return MessageRequest(
             model = "claude-3-5-sonnet-20240620",
             max_tokens = 1000,
@@ -143,25 +118,13 @@ class UploadActivity : AppCompatActivity() {
         )
     }
 
-    private fun extractData(inputStream: InputStream?): String {
-        try {
-            var extractedText = ""
-            val pdfReader = PdfReader(inputStream)
-            val numberOfPages = pdfReader.numberOfPages
-            for (i in 1..numberOfPages) {
-                extractedText += PdfTextExtractor.getTextFromPage(pdfReader, i).trim() + "\n"
-            }
-            pdfReader.close()
-            return extractedText
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return "Error: ${e.message}"
+    private fun showToast(message: String) {
+        runOnUiThread {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
     }
 
     companion object {
         private const val FILE_PICKER_REQUEST_CODE = 1
-        private val api = RetrofitClient.create()
     }
 }
-
