@@ -10,8 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.final_project.ui.theme.Final_ProjectTheme
 import app.Server
+import com.example.final_project.ui.theme.Final_ProjectTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -53,3 +53,4 @@ fun GreetingPreview() {
         Greeting("Android")
     }
 }
+

@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 android {
@@ -32,11 +32,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -49,7 +49,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/INDEX.LIST"
             excludes += "/META-INF/io.netty.versions.properties"
-
         }
     }
 }
@@ -124,12 +123,24 @@ configurations.all {
     }
 }
 
-tasks.create("stage") {
-    dependsOn("shadowJar")
-}
+tasks {
+    val shadowJar by creating(com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
+        manifest {
+            attributes(mapOf("Main-Class" to "app.ServerMain"))
+        }
+        mergeServiceFiles()
+        exclude("META-INF/*.DSA", "META-INF/*.RSA", "META-INF/*.SF")
+    }
 
-tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
-    manifest {
-        attributes(mapOf("Main-Class" to "com.example.final_project.ServerKt"))
+    create("stage") {
+        dependsOn(shadowJar)
+    }
+
+    register<JavaExec>("runServer") {
+        group = "run"
+        mainClass.set("app.ServerMain")
+        classpath = files(
+            configurations.getByName("runtimeClasspath")
+        )
     }
 }
