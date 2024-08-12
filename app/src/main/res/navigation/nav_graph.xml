@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Inside nav_graph.xml -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     tools:context="com.example.server.app.Auth.AppFragment"
-    app:startDestination="@id/appFragment">
+    app:startDestination="@id/registerFragment">
 
     <fragment
         android:id="@+id/appFragment"
-        android:name="com.example.server.app.Auth.AppFragment"
+        android:name="app.Auth.AppFragment"
         android:label="App Fragment"
         tools:layout="@layout/fragment_app">
 
@@ -25,10 +24,10 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.example.server.app.Auth.LoginFragment"
+        android:name="app.Auth.LoginFragment"
         android:label="Login Fragment"
         tools:layout="@layout/fragment_login">
-        <!-- Define login fragment details -->
+
         <action
             android:id="@+id/action_loginFragment_self"
             app:destination="@id/loginFragment" />
@@ -39,19 +38,21 @@
 
     <fragment
         android:id="@+id/registerFragment"
-        android:name="com.example.server.app.Auth.RegisterFragment"
+        android:name="app.Auth.RegisterFragment"
         android:label="Register Fragment"
         tools:layout="@layout/fragment_register">
-        <!-- Define register fragment details -->
+
         <action
             android:id="@+id/action_registerFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
     </fragment>
+
     <action android:id="@+id/action_global_loginFragment" app:destination="@id/loginFragment" />
     <action android:id="@+id/action_global_registerFragment" app:destination="@id/registerFragment" />
+
     <activity
         android:id="@+id/uploadActivity"
-        android:name="com.example.server.app.UploadActivity"
+        android:name="com.example.app.UploadActivity"
         android:label="activity_upload"
         tools:layout="@layout/activity_upload" />
 
