@@ -1,4 +1,4 @@
-package app
+package com.example.app
 
 data class MessageRequest(
     val model: String,

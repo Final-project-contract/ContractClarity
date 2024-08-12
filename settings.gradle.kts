@@ -5,7 +5,6 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -15,4 +14,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Final_Project"
-include(":app", ":server")
+include(":app")
+include(":server")

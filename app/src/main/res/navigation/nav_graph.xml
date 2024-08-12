@@ -4,12 +4,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    tools:context="app.Auth.AppFragment"
+    tools:context="com.example.server.app.Auth.AppFragment"
     app:startDestination="@id/appFragment">
 
     <fragment
         android:id="@+id/appFragment"
-        android:name="app.Auth.AppFragment"
+        android:name="com.example.server.app.Auth.AppFragment"
         android:label="App Fragment"
         tools:layout="@layout/fragment_app">
 
@@ -25,7 +25,7 @@
 
     <fragment
         android:id="@+id/loginFragment"
-        android:name="app.Auth.LoginFragment"
+        android:name="com.example.server.app.Auth.LoginFragment"
         android:label="Login Fragment"
         tools:layout="@layout/fragment_login">
         <!-- Define login fragment details -->
@@ -39,7 +39,7 @@
 
     <fragment
         android:id="@+id/registerFragment"
-        android:name="app.Auth.RegisterFragment"
+        android:name="com.example.server.app.Auth.RegisterFragment"
         android:label="Register Fragment"
         tools:layout="@layout/fragment_register">
         <!-- Define register fragment details -->
@@ -51,7 +51,7 @@
     <action android:id="@+id/action_global_registerFragment" app:destination="@id/registerFragment" />
     <activity
         android:id="@+id/uploadActivity"
-        android:name="app.UploadActivity"
+        android:name="com.example.server.app.UploadActivity"
         android:label="activity_upload"
         tools:layout="@layout/activity_upload" />
 

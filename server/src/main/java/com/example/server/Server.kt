@@ -2,7 +2,6 @@ package com.example.server
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -21,7 +20,6 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -29,7 +27,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
-import java.net.URI
 import java.util.Date
 
 object Server {
@@ -81,24 +78,13 @@ object Server {
 
     private fun Application.configureRouting() {
         routing {
-            get("/") {
-                call.respondText("ContractClarity API is running!", contentType = ContentType.Text.Plain)
-            }
-
-            get("/health") {
-                call.respondText("OK", contentType = ContentType.Text.Plain)
-            }
-
             post("/register") {
                 try {
                     val user = call.receive<User>()
-                    logger.info("Received registration request for user: ${user.email}")
                     val userId = userDao.create(user)
                     if (userId != null) {
-                        logger.info("User registered successfully: $userId")
                         call.respond(HttpStatusCode.Created, mapOf("userId" to userId))
                     } else {
-                        logger.warn("Registration failed for user: ${user.email}")
                         call.respond(HttpStatusCode.BadRequest, "Registration failed")
                     }
                 } catch (e: Exception) {
@@ -202,23 +188,20 @@ object Server {
     }
 
     private fun Application.configureDatabase() {
-        val dbUrl = System.getenv("DATABASE_URL") ?: throw IllegalStateException("DATABASE_URL must be set")
-        val dbUri = URI(dbUrl)
-        val username = dbUri.userInfo.split(":")[0]
-        val password = dbUri.userInfo.split(":")[1]
-        val jdbcUrl = "jdbc:postgresql://${dbUri.host}:${dbUri.port}${dbUri.path}?sslmode=require"
-
         Database.connect(
-            url = jdbcUrl,
+            url = "jdbc:postgresql://localhost:5432/contract_management",
             driver = "org.postgresql.Driver",
-            user = username,
-            password = password
+            user = "postgres",
+            password = "235689"
         )
 
         transaction {
-            SchemaUtils.create(Users, Contracts, ContractSummaries)
+            SchemaUtils.create(
+                Users,
+                Contracts,
+                ContractSummaries
+            )
         }
-        logger.info("Database configured successfully")
     }
 
     private fun createJwtToken(userId: Int): String {
@@ -232,6 +215,6 @@ object Server {
 }
 
 fun main() {
-    println("Starting server...")
+    println("Starting server on port 8080...")
     Server.start()
 }

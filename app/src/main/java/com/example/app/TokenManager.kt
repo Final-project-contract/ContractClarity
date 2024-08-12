@@ -1,4 +1,4 @@
-package app
+package com.example.app
 
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences

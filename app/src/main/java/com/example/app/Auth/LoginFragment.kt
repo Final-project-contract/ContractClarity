@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import app.TokenManager
+import com.example.app.TokenManager
 import com.example.final_project.R
 import io.ktor.client.HttpClient
 import io.ktor.client.request.post
@@ -30,11 +30,6 @@ class LoginFragment : Fragment() {
     private lateinit var editTextPassword: EditText
     private lateinit var buttonLogin: Button
     private lateinit var tokenManager: TokenManager
-
-
-    companion object {
-        private const val BASE_URL = "https://contractclarity-e30d2227fa32.herokuapp.com/"
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -60,7 +55,7 @@ class LoginFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val client = HttpClient()
-                    val response: HttpResponse = client.post("$BASE_URL/login") {
+                    val response: HttpResponse = client.post("http://10.0.2.2:8080/login") {
                         contentType(ContentType.Application.Json)
                         setBody("""{"email":"$email","password":"$password"}""")
                     }

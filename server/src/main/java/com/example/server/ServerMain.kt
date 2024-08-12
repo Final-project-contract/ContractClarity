@@ -1,8 +1,5 @@
-package com.example.server
-
-object ServerMain {
-    @JvmStatic
-    fun main(args: Array<String>) {
-        Server.start()
-    }
-}
+//package com.example.server
+//
+//fun main() {
+//        Server.start()
+//}

@@ -15,7 +15,6 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -30,10 +29,6 @@ class RegisterFragment : Fragment() {
     private lateinit var editTextPassword: EditText
     private lateinit var editTextIndustry: EditText
     private lateinit var buttonRegister: Button
-
-    companion object {
-        private const val BASE_URL = "https://contractclarity-e30d2227fa32.herokuapp.com/"
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -64,21 +59,17 @@ class RegisterFragment : Fragment() {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
                     val client = HttpClient()
-                    val response: HttpResponse = client.post("$BASE_URL/register") {
+                    val response: HttpResponse = client.post("http://10.0.2.2:8080/register") {
                         contentType(ContentType.Application.Json)
                         setBody("""
-                        {
-                            "fullName":"$fullName",
-                            "email":"$email",
-                            "password":"$password",
-                            "industry":"$industry"
-                        }
-                    """.trimIndent())
+                            {
+                                "fullName":"$fullName",
+                                "email":"$email",
+                                "password":"$password",
+                                "industry":"$industry"
+                            }
+                        """.trimIndent())
                     }
-
-                    println("Response status: ${response.status}")
-                    println("Response body: ${response.bodyAsText()}")
-
                     if (response.status.isSuccess()) {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
@@ -86,13 +77,11 @@ class RegisterFragment : Fragment() {
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Registration failed: ${response.bodyAsText()}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Registration failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                     client.close()
                 } catch (e: Exception) {
-                    println("Registration error: ${e.message}")
-                    e.printStackTrace()
                     withContext(Dispatchers.Main) {
                         Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
@@ -107,22 +96,27 @@ class RegisterFragment : Fragment() {
         password: String,
         industry: String
     ): Boolean {
+
+        // Validate full name (required)
         if (fullName.isEmpty()) {
             editTextFullName.error = "Full Name is required"
             return false
         }
 
+        // Validate email (required and valid format)
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
         if (email.isEmpty() || !email.matches(emailPattern.toRegex())) {
             editTextEmail.error = "Enter a valid email address"
             return false
         }
 
+        // Validate password (at least 6 characters)
         if (password.length < 6) {
             editTextPassword.error = "Password must be at least 6 characters"
             return false
         }
 
+        // Validate industry (required)
         if (industry.isEmpty()) {
             editTextIndustry.error = "Industry is required"
             return false
