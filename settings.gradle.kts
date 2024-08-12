@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Final_Project"
 include(":app")
+include(":server")

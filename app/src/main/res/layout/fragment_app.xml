@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="app.Auth.AppFragment"
+    tools:context="com.example.server.app.Auth.AppFragment"
     android:background="@color/white"
     app:navGraph="@navigation/nav_graph">
 
