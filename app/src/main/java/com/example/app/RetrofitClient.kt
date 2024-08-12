@@ -7,8 +7,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
     private const val BASE_URL = "https://api.anthropic.com/"
 
-//    test
-    //d
     fun create(): AnthropicApi {
         val apiKey = ApiKey().getKey()
         val client = OkHttpClient.Builder()
@@ -32,3 +30,4 @@ object RetrofitClient {
             .create(AnthropicApi::class.java)
     }
 }
+
