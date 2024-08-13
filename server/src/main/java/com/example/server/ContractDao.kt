@@ -9,9 +9,9 @@ class ContractDao {
     fun create(contract: Contract): Int? {
         return transaction {
             Contracts.insert {
-                it[userId] = contract.userId
-                it[name] = contract.name
-                it[url] = contract.url
+                it[Contracts.userId] = contract.userId
+                it[Contracts.name] = contract.name
+                it[Contracts.url] = contract.url
             } get Contracts.id
         }
     }
