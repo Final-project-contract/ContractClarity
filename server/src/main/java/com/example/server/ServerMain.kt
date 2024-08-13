@@ -1,5 +1,5 @@
-//package com.example.server
-//
-//fun main() {
-//        Server.start()
-//}
+package com.example.server
+
+fun main() {
+        Server.start()
+}
