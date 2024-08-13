@@ -189,10 +189,10 @@ object Server {
 
     private fun Application.configureDatabase() {
         Database.connect(
-            url = "jdbc:postgresql://localhost:5432/contract_management",
-            driver = "org.postgresql.Driver",
-            user = "postgres",
-            password = "235689"
+            url = System.getenv("DB_URL") ?: "jdbc:postgresql://localhost:5432/contract_management",
+            driver = System.getenv("DB_DRIVER") ?: "org.postgresql.Driver",
+            user = System.getenv("DB_USER") ?: "postgres",
+            password = System.getenv("DB_PASSWORD") ?: "235689"
         )
 
         transaction {

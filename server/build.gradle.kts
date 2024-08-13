@@ -35,7 +35,24 @@ android {
             excludes += "/META-INF/DEPENDENCIES"
         }
     }
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/java")
+            kotlin.srcDirs("src/main/java")
+        }
+    }
+
+
 }
+configurations {
+    create("serverRuntimeClasspath") {
+        extendsFrom(configurations.getByName("implementation"))
+        attributes {
+            attribute(Attribute.of("org.gradle.usage", String::class.java), "java-runtime")
+        }
+    }
+}
+
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
@@ -80,3 +97,20 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
+tasks.register<JavaExec>("runServer") {
+    group = "Execution"
+    description = "Run the Ktor server"
+    classpath = files(android.bootClasspath) +
+            files("${project.buildDir}/intermediates/javac/debug/classes") +
+            files("${project.buildDir}/tmp/kotlin-classes/debug") +
+            configurations.getByName("serverRuntimeClasspath")
+    mainClass.set("com.example.server.ServerKt")
+    workingDir = projectDir
+    environment("PORT", "8080")
+    environment("JWT_SECRET", "89VZJuRkKB0sglml")
+    environment("DB_URL", "jdbc:postgresql://localhost:5432/contract_management")
+    environment("DB_DRIVER", "org.postgresql.Driver")
+    environment("DB_USER", "postgres")
+    environment("DB_PASSWORD", "235689")
+}
+
