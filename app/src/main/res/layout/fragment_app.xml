@@ -1,58 +1,57 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.server.app.Auth.AppFragment"
-    android:background="@color/white"
-    app:navGraph="@navigation/nav_graph">
+    tools:context="app.Auth.AppFragment"
+    android:background="@color/white">
 
     <ImageView
         android:id="@+id/LogoImg"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="161dp"
         android:layout_marginTop="100dp"
-        android:src="@drawable/logo2" />
+        android:src="@drawable/logo2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/LogoImg2"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="51dp"
-        android:layout_marginTop="260dp"
-        android:src="@drawable/logo3" />
+        android:layout_marginTop="16dp"
+        android:src="@drawable/logo3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/LogoImg" />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/loginButton"
+        android:layout_width="176dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:orientation="vertical"
-        android:gravity="center">
-
-        <Button
-            android:id="@+id/loginButton"
-            android:layout_width="176dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="190dp"
-            android:background="@drawable/button_background"
-            android:text="Login"
-            android:textColor="@color/white" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:orientation="vertical"
-        android:gravity="center">
-
-    </LinearLayout>
+        android:background="@drawable/button_background"
+        android:text="Login"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/registerButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/LogoImg2"
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <Button
         android:id="@+id/registerButton"
-        android:layout_width="179dp"
+        android:layout_width="176dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="115dp"
-        android:layout_marginTop="520dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/button_background"
         android:text="Register"
-        android:textColor="@color/white" />
-</FrameLayout>
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/loginButton" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
