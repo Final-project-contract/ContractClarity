@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    tools:context="com.example.server.app.Auth.AppFragment"
     app:startDestination="@id/appFragment">
 
     <fragment
@@ -29,11 +28,10 @@
         tools:layout="@layout/fragment_login">
 
         <action
-            android:id="@+id/action_loginFragment_self"
-            app:destination="@id/loginFragment" />
-        <action
-            android:id="@+id/action_loginFragment_to_uploadActivity"
-            app:destination="@id/uploadActivity" />
+            android:id="@+id/action_loginFragment_to_profileFragment"
+            app:destination="@id/profileFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -47,13 +45,24 @@
             app:destination="@id/loginFragment" />
     </fragment>
 
-    <action android:id="@+id/action_global_loginFragment" app:destination="@id/loginFragment" />
-    <action android:id="@+id/action_global_registerFragment" app:destination="@id/registerFragment" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.app.ProfileFragment"
+        android:label="Profile Fragment"
+        tools:layout="@layout/fragment_profile">
+    </fragment>
 
     <activity
         android:id="@+id/uploadActivity"
         android:name="com.example.app.UploadActivity"
-        android:label="activity_upload"
-        tools:layout="@layout/activity_upload" />
+        android:label="Upload Contract"
+        tools:layout="@layout/activity_upload"
+        app:launchSingleTop="true" />
+
+    <fragment
+        android:id="@+id/calendarFragment"
+        android:name="com.example.app.CalendarFragment"
+        android:label="Calendar"
+        tools:layout="@layout/fragment_calendar" />
 
 </navigation>

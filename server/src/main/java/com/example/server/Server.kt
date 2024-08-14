@@ -183,6 +183,26 @@ object Server {
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching the contract summary")
                     }
                 }
+
+                get("/profile") {
+                    try {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+                        if (userId == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid token")
+                            return@get
+                        }
+                        val user = userDao.findById(userId)
+                        if (user != null) {
+                            call.respond(mapOf("fullName" to user.fullName))
+                        } else {
+                            call.respond(HttpStatusCode.NotFound, "User not found")
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Error fetching user profile: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching the user profile")
+                    }
+                }
+
             }
         }
     }
