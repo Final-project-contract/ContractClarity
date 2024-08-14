@@ -1,6 +1,8 @@
 package com.example.server
 
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.mindrot.jbcrypt.BCrypt
 
@@ -35,6 +37,13 @@ class UserDao {
             } else {
                 null
             }
+        }
+    }
+    fun findById(id: Int): User? {
+        return transaction {
+            Users.select { Users.id eq id }
+                .mapNotNull { toUser(it) }
+                .singleOrNull()
         }
     }
 

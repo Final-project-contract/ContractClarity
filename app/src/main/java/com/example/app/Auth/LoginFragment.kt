@@ -65,7 +65,7 @@ class LoginFragment : Fragment() {
                         tokenManager.saveToken(token)
                         withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                            findNavController().navigate(R.id.action_loginFragment_to_uploadActivity)
+                            findNavController().navigate(R.id.action_loginFragment_to_profileFragment)
                         }
                     } else {
                         withContext(Dispatchers.Main) {

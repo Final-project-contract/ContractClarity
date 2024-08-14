@@ -13,6 +13,14 @@ import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
+import io.ktor.client.HttpClient
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Contract
 import java.io.InputStream
@@ -35,6 +43,13 @@ class UploadActivity : AppCompatActivity() {
         uploadButton.setOnClickListener {
             openFilePicker()
         }
+
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 
     private fun openFilePicker() {
