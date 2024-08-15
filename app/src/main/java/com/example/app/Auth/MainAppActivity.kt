@@ -1,4 +1,4 @@
-package app.Auth
+package com.example.app
 
 import android.os.Bundle
 import android.view.View

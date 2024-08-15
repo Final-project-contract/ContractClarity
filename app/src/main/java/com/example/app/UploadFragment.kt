@@ -6,10 +6,13 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
 import com.itextpdf.text.pdf.PdfReader
@@ -25,31 +28,31 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import java.io.InputStream
 
-class UploadActivity : AppCompatActivity() {
+class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
     private lateinit var uploadButton: Button
     private lateinit var selectedFileTextView: TextView
     private lateinit var tokenManager: TokenManager
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_upload)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_upload, container, false)
+    }
 
-        uploadButton = findViewById(R.id.uploadButton)
-        selectedFileTextView = findViewById(R.id.selectedFileTextView)
-        summaryTextView = findViewById(R.id.summaryTextView)
-        tokenManager = TokenManager(this)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        uploadButton = view.findViewById(R.id.uploadButton)
+        selectedFileTextView = view.findViewById(R.id.selectedFileTextView)
+        summaryTextView = view.findViewById(R.id.summaryTextView)
+        tokenManager = TokenManager(requireContext())
 
         uploadButton.setOnClickListener {
             openFilePicker()
         }
-
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return true
     }
 
     private fun openFilePicker() {
@@ -65,7 +68,7 @@ class UploadActivity : AppCompatActivity() {
             selectedFileTextView.text = "File Selected"
             data?.data?.let { uri ->
                 uploadContractToServer(uri)
-                summarizePdf(uri, this)
+                summarizePdf(uri, requireContext())
             }
         }
     }
@@ -107,13 +110,13 @@ class UploadActivity : AppCompatActivity() {
                 val response = api.createMessage(request)
                 val summary = response.content.firstOrNull()?.text ?: "No summary available"
 
-                runOnUiThread {
+                activity?.runOnUiThread {
                     summaryTextView.text = summary
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 val errorBody = if (e is retrofit2.HttpException) e.response()?.errorBody()?.string() else null
-                runOnUiThread {
+                activity?.runOnUiThread {
                     summaryTextView.text = "Error: ${e.message}\nError Body: $errorBody"
                 }
             }
@@ -121,8 +124,8 @@ class UploadActivity : AppCompatActivity() {
     }
 
     private fun showToast(message: String) {
-        runOnUiThread {
-            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        activity?.runOnUiThread {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
 
