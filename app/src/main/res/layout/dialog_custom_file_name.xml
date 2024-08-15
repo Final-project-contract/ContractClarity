@@ -6,16 +6,16 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/contractNameTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:text="Enter a file name:"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
-    <TextView
-        android:id="@+id/contractTypeTextView"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/fileNameEditText"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="14sp" />
+        android:hint="File Name"
+        android:inputType="text" />
 
 </LinearLayout>

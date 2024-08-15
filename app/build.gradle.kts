@@ -76,14 +76,11 @@ dependencies {
     // Ktor client
     implementation("io.ktor:ktor-client-android:2.3.7")
     implementation("io.ktor:ktor-client-serialization:2.3.7")
-
+    implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-    // Logging (use log4j instead of logback)
-    implementation("org.apache.logging.log4j:log4j-core:2.17.1")
-    implementation("org.apache.logging.log4j:log4j-api:2.17.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
+
 
     implementation(project(":server"))
 
