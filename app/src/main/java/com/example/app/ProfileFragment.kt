@@ -1,10 +1,12 @@
 package com.example.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -84,10 +86,14 @@ class ProfileFragment : Fragment() {
                         contracts.add(Contract(
                             id = contractObj.getInt("id"),
                             name = contractObj.getString("name"),
-                            contentType = contractObj.getString("contentType")
+                            contentType = contractObj.getString("contentType"),
+                            summary = contractObj.optString("summary", "No summary available"),
+                            fileName = contractObj.getString("name") + ".pdf"
                         ))
                     }
-                    contractsRecyclerView.adapter = ContractAdapter(contracts)
+                    contractsRecyclerView.adapter = ContractAdapter(contracts) { contract ->
+                        showContractSummary(contract)
+                    }
                 } else {
                     throw Exception("Failed to fetch contracts: ${contractsResponse.status}, Body: ${contractsResponse.bodyAsText()}")
                 }
@@ -101,16 +107,32 @@ class ProfileFragment : Fragment() {
             }
         }
     }
+
+    private fun showContractSummary(contract: Contract) {
+        val intent = Intent(requireContext(), SummaryActivity::class.java)
+        intent.putExtra("SUMMARY", contract.summary)
+        startActivity(intent)
+    }
 }
 
-data class Contract(val id: Int, val name: String, val contentType: String)
+data class Contract(
+    val id: Int,
+    val name: String,
+    val contentType: String,
+    val summary: String,
+    val fileName: String
+)
 
-class ContractAdapter(private val contracts: List<Contract>) :
-    RecyclerView.Adapter<ContractAdapter.ContractViewHolder>() {
+class ContractAdapter(
+    private val contracts: List<Contract>,
+    private val onItemClick: (Contract) -> Unit
+) : RecyclerView.Adapter<ContractAdapter.ContractViewHolder>() {
 
     class ContractViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val contractNameTextView: TextView = view.findViewById(R.id.contractNameTextView)
-        val contractTypeTextView: TextView = view.findViewById(R.id.contractTypeTextView)
+        val contractDateTextView: TextView = view.findViewById(R.id.contractDateTextView)
+        val openContractButton: Button = view.findViewById(R.id.openContractButton)
+        val openSummaryButton: Button = view.findViewById(R.id.openSummaryButton)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContractViewHolder {
@@ -122,7 +144,15 @@ class ContractAdapter(private val contracts: List<Contract>) :
     override fun onBindViewHolder(holder: ContractViewHolder, position: Int) {
         val contract = contracts[position]
         holder.contractNameTextView.text = contract.name
-        holder.contractTypeTextView.text = contract.contentType
+        holder.contractDateTextView.text = "Date placeholder" // Replace with actual date
+
+        holder.openContractButton.setOnClickListener {
+            onItemClick(contract)
+        }
+
+        holder.openSummaryButton.setOnClickListener {
+            onItemClick(contract)
+        }
     }
 
     override fun getItemCount() = contracts.size
