@@ -52,12 +52,11 @@
         tools:layout="@layout/fragment_profile">
     </fragment>
 
-    <activity
-        android:id="@+id/uploadActivity"
-        android:name="com.example.app.UploadActivity"
+    <fragment
+        android:id="@+id/uploadFragment"
+        android:name="com.example.app.UploadFragment"
         android:label="Upload Contract"
-        tools:layout="@layout/activity_upload"
-        app:launchSingleTop="true" />
+        tools:layout="@layout/fragment_upload" />
 
     <fragment
         android:id="@+id/calendarFragment"
