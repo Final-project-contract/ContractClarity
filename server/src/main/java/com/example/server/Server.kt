@@ -5,6 +5,9 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.PartData
+import io.ktor.http.content.forEachPart
+import io.ktor.http.content.streamProvider
 import io.ktor.serialization.gson.gson
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -19,6 +22,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -40,6 +44,7 @@ object Server {
     private val contractSummaryDao = ContractSummaryDao()
 
     fun start() {
+        org.apache.log4j.BasicConfigurator.configure()
         val port = System.getenv("PORT")?.toInt() ?: 8080
         embeddedServer(Netty, port = port, host = "0.0.0.0") {
             install(CORS) {
@@ -73,6 +78,7 @@ object Server {
             }
             configureRouting()
             configureDatabase()
+            updateDatabaseSchema()
         }.start(wait = true)
     }
 
@@ -114,19 +120,55 @@ object Server {
                     try {
                         val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
                         if (userId == null) {
+                            logger.warn("Invalid token: userId is null")
                             call.respond(HttpStatusCode.Unauthorized, "Invalid token")
                             return@post
                         }
-                        val contract = call.receive<Contract>()
-                        val contractId = contractDao.create(contract.copy(userId = userId))
-                        if (contractId != null) {
-                            call.respond(HttpStatusCode.Created, mapOf("contractId" to contractId))
+
+                        logger.info("Receiving contract upload for user $userId")
+
+                        val multipart = call.receiveMultipart()
+                        var fileName = ""
+                        var fileBytes: ByteArray? = null
+                        var contentType = ""
+
+                        multipart.forEachPart { part ->
+                            when (part) {
+                                is PartData.FileItem -> {
+                                    fileName = part.originalFileName ?: "unnamed"
+                                    contentType = part.contentType?.toString() ?: "application/octet-stream"
+                                    fileBytes = part.streamProvider().readBytes()
+                                    logger.info("Received file: $fileName, type: $contentType, size: ${fileBytes?.size ?: 0} bytes")
+                                }
+                                else -> logger.warn("Unexpected part in multipart data: ${part::class.simpleName}")
+                            }
+                            part.dispose()
+                        }
+
+                        if (fileBytes != null) {
+                            val filePath = "/uploads/contracts/$fileName"
+                            val contract = Contract(
+                                userId = userId,
+                                name = fileName,
+                                filePath = filePath,
+                                fileSize = fileBytes!!.size.toLong(),
+                                contentType = contentType
+                            )
+                            val contractId = contractDao.create(contract)
+                            if (contractId != null) {
+                                logger.info("Contract created successfully with ID: $contractId")
+                                call.respond(HttpStatusCode.Created, mapOf("contractId" to contractId))
+                            } else {
+                                logger.error("Failed to create contract in database")
+                                call.respond(HttpStatusCode.InternalServerError, "Failed to create contract in database")
+                            }
                         } else {
-                            call.respond(HttpStatusCode.BadRequest, "Failed to create contract")
+                            logger.warn("No file received in the request")
+                            call.respond(HttpStatusCode.BadRequest, "No file received")
                         }
                     } catch (e: Exception) {
-                        logger.error("Error creating contract: ${e.message}")
-                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while creating the contract")
+                        logger.error("Error creating contract: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while creating the contract: ${e.message}")
                     }
                 }
 
@@ -138,10 +180,11 @@ object Server {
                             return@get
                         }
                         val contracts = contractDao.findByUserId(userId)
+                        logger.info("Fetched ${contracts.size} contracts for user $userId")
                         call.respond(contracts)
                     } catch (e: Exception) {
-                        logger.error("Error fetching contracts: ${e.message}")
-                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching contracts")
+                        logger.error("Error fetching contracts: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching contracts: ${e.message}")
                     }
                 }
 
@@ -202,7 +245,6 @@ object Server {
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching the user profile")
                     }
                 }
-
             }
         }
     }
@@ -214,16 +256,30 @@ object Server {
             user = System.getenv("DB_USER") ?: "postgres",
             password = System.getenv("DB_PASSWORD") ?: "235689"
         )
-
-        transaction {
-            SchemaUtils.create(
-                Users,
-                Contracts,
-                ContractSummaries
-            )
-        }
     }
 
+    private fun updateDatabaseSchema() {
+        transaction {
+            SchemaUtils.create(Users, Contracts, ContractSummaries)
+
+            // Check if the content_type column exists
+            val contentTypeExists = try {
+                Contracts.columns.any { it.name == "content_type" }
+            } catch (e: Exception) {
+                false
+            }
+
+            if (!contentTypeExists) {
+                // Add the content_type column
+                SchemaUtils.createMissingTablesAndColumns(Contracts)
+
+                // If the above doesn't work, try this raw SQL approach:
+                // exec("ALTER TABLE contracts ADD COLUMN content_type VARCHAR(100)")
+            }
+
+            commit()
+        }
+    }
     private fun createJwtToken(userId: Int): String {
         return JWT.create()
             .withAudience(AUDIENCE)

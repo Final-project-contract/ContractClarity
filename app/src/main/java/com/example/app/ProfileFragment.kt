@@ -84,29 +84,33 @@ class ProfileFragment : Fragment() {
                         contracts.add(Contract(
                             id = contractObj.getInt("id"),
                             name = contractObj.getString("name"),
-                            url = contractObj.getString("url")
+                            contentType = contractObj.getString("contentType")
                         ))
                     }
                     contractsRecyclerView.adapter = ContractAdapter(contracts)
                 } else {
-                    throw Exception("Failed to fetch contracts: ${contractsResponse.status}")
+                    throw Exception("Failed to fetch contracts: ${contractsResponse.status}, Body: ${contractsResponse.bodyAsText()}")
                 }
 
                 client.close()
             } catch (e: Exception) {
                 Log.e("ProfileFragment", "Error loading profile", e)
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                activity?.runOnUiThread {
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
 }
-data class Contract(val id: Int, val name: String, val url: String)
+
+data class Contract(val id: Int, val name: String, val contentType: String)
 
 class ContractAdapter(private val contracts: List<Contract>) :
     RecyclerView.Adapter<ContractAdapter.ContractViewHolder>() {
 
     class ContractViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val contractNameTextView: TextView = view.findViewById(R.id.contractNameTextView)
+        val contractTypeTextView: TextView = view.findViewById(R.id.contractTypeTextView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContractViewHolder {
@@ -118,7 +122,7 @@ class ContractAdapter(private val contracts: List<Contract>) :
     override fun onBindViewHolder(holder: ContractViewHolder, position: Int) {
         val contract = contracts[position]
         holder.contractNameTextView.text = contract.name
-        // You can set an OnClickListener here for future functionality
+        holder.contractTypeTextView.text = contract.contentType
     }
 
     override fun getItemCount() = contracts.size

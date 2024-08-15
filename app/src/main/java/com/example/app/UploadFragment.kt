@@ -1,6 +1,7 @@
 package com.example.app
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -10,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -18,14 +20,20 @@ import com.example.final_project.R
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import java.io.InputStream
 
 class UploadFragment : Fragment() {
@@ -33,6 +41,7 @@ class UploadFragment : Fragment() {
     private lateinit var uploadButton: Button
     private lateinit var selectedFileTextView: TextView
     private lateinit var tokenManager: TokenManager
+    private var lastUploadedContractId: Int? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -65,41 +74,84 @@ class UploadFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            selectedFileTextView.text = "File Selected"
             data?.data?.let { uri ->
-                uploadContractToServer(uri)
-                summarizePdf(uri, requireContext())
+                showCustomFileNameDialog(uri)
             }
         }
     }
 
-    private fun uploadContractToServer(fileUri: Uri) {
+    private fun showCustomFileNameDialog(fileUri: Uri) {
+        val builder = AlertDialog.Builder(requireContext())
+        val inflater = requireContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val dialogView = inflater.inflate(R.layout.dialog_custom_file_name, null)
+
+        val fileNameEditText = dialogView.findViewById<EditText>(R.id.fileNameEditText)
+
+        builder.setView(dialogView)
+            .setPositiveButton("Upload") { _, _ ->
+                val fileName = fileNameEditText.text.toString()
+                uploadContractToServer(fileUri, fileName)
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+
+    private fun uploadContractToServer(fileUri: Uri, fileName: String) {
         lifecycleScope.launch {
             try {
                 val token = tokenManager.getToken() ?: throw Exception("No token found")
+                Log.d("UploadFragment", "Token retrieved: ${token.take(10)}...")
+
                 val client = HttpClient()
-                val response: HttpResponse = client.post("http://10.0.2.2:8080/contracts") {
+
+                val inputStream = requireContext().contentResolver.openInputStream(fileUri)
+                val fileBytes = inputStream?.readBytes() ?: throw Exception("Cannot read file")
+                Log.d("UploadFragment", "File read successfully, size: ${fileBytes.size} bytes")
+
+                val filePath = "/uploads/contracts/$fileName.pdf"
+
+                val response: HttpResponse = client.submitFormWithBinaryData(
+                    url = "http://10.0.2.2:8080/contracts",
+                    formData = formData {
+                        append("file", fileBytes, Headers.build {
+                            append(HttpHeaders.ContentType, "application/pdf")
+                            append(HttpHeaders.ContentDisposition, "filename=\"$fileName.pdf\"")
+                        })
+                        append("filePath", filePath)
+                    }
+                ) {
                     header("Authorization", "Bearer $token")
-                    contentType(ContentType.Application.Json)
-                    setBody("""
-                        {
-                            "name": "${fileUri.lastPathSegment}",
-                            "url": "${fileUri}"
-                        }
-                    """.trimIndent())
                 }
+
+                Log.d("UploadFragment", "Request sent with file size: ${fileBytes.size}")
+                Log.d("UploadFragment", "Upload response status: ${response.status}")
+                Log.d("UploadFragment", "Upload response body: ${response.bodyAsText()}")
+
                 if (response.status.isSuccess()) {
-                    showToast("Contract uploaded successfully")
+                    val responseBody = response.bodyAsText()
+                    val contractId = Json.decodeFromString<Map<String, Int>>(responseBody)["contractId"]
+                    if (contractId != null) {
+                        lastUploadedContractId = contractId
+                        showToast("Contract uploaded successfully")
+                        summarizePdf(fileUri, requireContext())
+                    } else {
+                        showToast("Failed to get contract ID")
+                    }
                 } else {
-                    showToast("Failed to upload contract")
+                    showToast("Failed to upload contract: ${response.status}")
                 }
                 client.close()
             } catch (e: Exception) {
+                Log.e("UploadFragment", "Error uploading contract", e)
                 showToast("Error: ${e.message}")
             }
         }
     }
-
     private fun summarizePdf(pdfUri: Uri, context: Context) {
         lifecycleScope.launch {
             try {
@@ -113,6 +165,9 @@ class UploadFragment : Fragment() {
                 activity?.runOnUiThread {
                     summaryTextView.text = summary
                 }
+
+                // Save the summary to the server
+                saveSummaryToServer(summary)
             } catch (e: Exception) {
                 e.printStackTrace()
                 val errorBody = if (e is retrofit2.HttpException) e.response()?.errorBody()?.string() else null
@@ -121,6 +176,37 @@ class UploadFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private suspend fun saveSummaryToServer(summary: String) {
+        try {
+            val contractId = lastUploadedContractId
+            if (contractId == null) {
+                showToast("No contract ID available")
+                return
+            }
+
+            val token = tokenManager.getToken() ?: throw Exception("No token found")
+            val client = HttpClient()
+            val response: HttpResponse = client.post("http://10.0.2.2:8080/contracts/$contractId/summary") {
+                header("Authorization", "Bearer $token")
+                contentType(ContentType.Application.Json)
+                setBody("""
+                    {
+                        "summaryText": "$summary"
+                    }
+                """.trimIndent())
+            }
+            if (response.status.isSuccess()) {
+                showToast("Summary saved successfully")
+            } else {
+                showToast("Failed to save summary")
+            }
+            client.close()
+        } catch (e: Exception) {
+            showToast("Error saving summary: ${e.message}")
+        }
+
     }
 
     private fun showToast(message: String) {
