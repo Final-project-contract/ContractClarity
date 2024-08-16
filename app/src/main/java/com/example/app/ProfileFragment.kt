@@ -59,9 +59,6 @@ class ProfileFragment : Fragment() {
                     header("Authorization", "Bearer $token")
                 }
 
-                Log.d("ProfileFragment", "Profile response status: ${profileResponse.status}")
-                Log.d("ProfileFragment", "Profile response body: ${profileResponse.bodyAsText()}")
-
                 if (profileResponse.status.isSuccess()) {
                     val profileJson = JSONObject(profileResponse.bodyAsText())
                     val username = profileJson.getString("fullName")
@@ -75,9 +72,6 @@ class ProfileFragment : Fragment() {
                     header("Authorization", "Bearer $token")
                 }
 
-                Log.d("ProfileFragment", "Contracts response status: ${contractsResponse.status}")
-                Log.d("ProfileFragment", "Contracts response body: ${contractsResponse.bodyAsText()}")
-
                 if (contractsResponse.status.isSuccess()) {
                     val contractsJson = JSONArray(contractsResponse.bodyAsText())
                     val contracts = mutableListOf<Contract>()
@@ -87,15 +81,16 @@ class ProfileFragment : Fragment() {
                             id = contractObj.getInt("id"),
                             name = contractObj.getString("name"),
                             contentType = contractObj.getString("contentType"),
-                            summary = contractObj.optString("summary", "No summary available"),
                             fileName = contractObj.getString("name") + ".pdf"
                         ))
                     }
-                    contractsRecyclerView.adapter = ContractAdapter(contracts) { contract ->
-                        showContractSummary(contract)
-                    }
+                    contractsRecyclerView.adapter = ContractAdapter(
+                        contracts,
+                        onContractClick = { contract -> openContract(contract) },
+                        onSummaryClick = { contract -> fetchAndShowSummary(contract.id) }
+                    )
                 } else {
-                    throw Exception("Failed to fetch contracts: ${contractsResponse.status}, Body: ${contractsResponse.bodyAsText()}")
+                    throw Exception("Failed to fetch contracts: ${contractsResponse.status}")
                 }
 
                 client.close()
@@ -108,9 +103,42 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    private fun showContractSummary(contract: Contract) {
+    private fun openContract(contract: Contract) {
+        // Implement logic to open the contract
+        Toast.makeText(context, "Opening contract: ${contract.name}", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun fetchAndShowSummary(contractId: Int) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val token = tokenManager.getToken() ?: throw Exception("No token found")
+                val client = HttpClient()
+
+                val summaryResponse: HttpResponse = client.get("http://10.0.2.2:8080/contracts/$contractId/summary") {
+                    header("Authorization", "Bearer $token")
+                }
+
+                if (summaryResponse.status.isSuccess()) {
+                    val summaryJson = JSONObject(summaryResponse.bodyAsText())
+                    val summaryText = summaryJson.getString("summaryText")
+                    showContractSummary(summaryText)
+                } else {
+                    throw Exception("Failed to fetch summary: ${summaryResponse.status}")
+                }
+
+                client.close()
+            } catch (e: Exception) {
+                Log.e("ProfileFragment", "Error fetching summary", e)
+                activity?.runOnUiThread {
+                    Toast.makeText(context, "Error fetching summary: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun showContractSummary(summary: String) {
         val intent = Intent(requireContext(), SummaryActivity::class.java)
-        intent.putExtra("SUMMARY", contract.summary)
+        intent.putExtra("SUMMARY", summary)
         startActivity(intent)
     }
 }
@@ -119,13 +147,13 @@ data class Contract(
     val id: Int,
     val name: String,
     val contentType: String,
-    val summary: String,
     val fileName: String
 )
 
 class ContractAdapter(
     private val contracts: List<Contract>,
-    private val onItemClick: (Contract) -> Unit
+    private val onContractClick: (Contract) -> Unit,
+    private val onSummaryClick: (Contract) -> Unit
 ) : RecyclerView.Adapter<ContractAdapter.ContractViewHolder>() {
 
     class ContractViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -144,14 +172,14 @@ class ContractAdapter(
     override fun onBindViewHolder(holder: ContractViewHolder, position: Int) {
         val contract = contracts[position]
         holder.contractNameTextView.text = contract.name
-        holder.contractDateTextView.text = "Date placeholder" // Replace with actual date
+        holder.contractDateTextView.text = "Date placeholder" // Replace with actual date if available
 
         holder.openContractButton.setOnClickListener {
-            onItemClick(contract)
+            onContractClick(contract)
         }
 
         holder.openSummaryButton.setOnClickListener {
-            onItemClick(contract)
+            onSummaryClick(contract)
         }
     }
 
