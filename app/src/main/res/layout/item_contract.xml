@@ -46,6 +46,8 @@
                 android:id="@+id/openContractButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/navy_blue"
+                android:textColor="@color/light_blue"
                 android:text="Open Contract" />
 
             <Button
@@ -53,6 +55,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
+                android:backgroundTint="@color/navy_blue"
+                android:textColor="@color/light_blue"
                 android:text="Open Summary" />
 
         </LinearLayout>

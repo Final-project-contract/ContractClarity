@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     tools:context="com.example.app.UploadFragment">
 
-
-    <!-- Optional: TextView to display selected file path -->
+    <!-- Title TextView -->
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="0dp"
@@ -19,18 +18,63 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/selectedFileTextView"
-        android:padding="16dp"/>
-    <Button
-        android:id="@+id/uploadButton"
+        android:fontFamily="@font/sans_serif_light"
+        android:textColor="@color/navy_blue"
+        android:padding="16dp"
+        app:layout_constraintBottom_toTopOf="@id/selectedFileTextView"/>
+
+    <!-- Selected File TextView -->
+    <TextView
+        android:id="@+id/selectedFileTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:background="@drawable/selected_file_background"
+        android:gravity="center"
+        android:text="No file selected"
+        android:textSize="16sp"
+        android:textColor="@color/navy_blue"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/uploadContainer"
+        android:layout_margin="16dp"/>
+
+    <!-- LinearLayout to hold ImageView and TextView -->
+    <LinearLayout
+        android:id="@+id/uploadContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Upload PDF File"
+        android:orientation="horizontal"
+        android:layout_margin="16dp"
         app:layout_constraintTop_toBottomOf="@id/selectedFileTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        app:layout_constraintBottom_toTopOf="@id/summaryTextView"/>
+        android:gravity="center_vertical">
+
+        <!-- Folder Icon ImageView -->
+        <ImageView
+            android:id="@+id/uploadIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/baseline_folder_open_24"
+            android:contentDescription="Open Folder"
+            android:layout_marginEnd="8dp"
+            android:layout_gravity="center_vertical" />
+
+        <!-- Upload File TextView -->
+        <TextView
+            android:id="@+id/uploadTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Upload File"
+            android:textSize="18sp"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/navy_blue"
+            android:gravity="center_vertical" />
+    </LinearLayout>
+
+    <!-- Summary TextView -->
     <TextView
         android:id="@+id/summaryTextView"
         android:layout_width="0dp"
@@ -38,26 +82,12 @@
         android:padding="16dp"
         android:scrollbars="vertical"
         android:text="Summary will appear here"
-        android:background="@android:color/background_light"
-        android:elevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/uploadButton"
+        android:fontFamily="sans-serif"
+        android:background="@drawable/summary_box_background"
+        android:elevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/uploadContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="16dp"/>
-
-
-    <TextView
-        android:id="@+id/selectedFileTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:gravity="center"
-        android:text="No file selected"
-        app:layout_constraintBottom_toTopOf="@id/uploadButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleTextView" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
