@@ -5,10 +5,10 @@
     android:layout_height="match_parent"
     tools:context="com.example.app.CalendarFragment">
 
-    <TextView
+    <CalendarView
+        android:id="@+id/calendarView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="Calendar Fragment (Coming Soon)" />
+        android:dateTextAppearance="@style/CalendarDateTextAppearance" />
 
 </FrameLayout>
