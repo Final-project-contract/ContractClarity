@@ -265,8 +265,7 @@ class UploadFragment : Fragment() {
                     role = "user",
                     content = listOf(
                         Content(
-                            text = "Write a professional concise summary of the next contract to a customer without legal proficiency:$content",
-                            type = "text"
+                            text = "give me a concise summary of the contract without and introduction and write at the bottom of the output write: IMPORTANT DATES: * list all the important dates in the contract here ONLY if specific dates are specified if not dont write IMPORTANT DATES: at all if there are specified dates write them in this format example: 1-1-1998 payment is due if given a range of dates use the latest date example: if given 1.1.1998-2.2.1999 then the output would be 2-2-1999 end of contract:$content",                            type = "text"
                         )
                     )
                 )
