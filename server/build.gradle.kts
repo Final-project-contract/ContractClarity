@@ -93,7 +93,9 @@ dependencies {
     // Explicitly add Guava
     implementation("com.google.guava:guava:31.1-android")
 
-
+    implementation("org.jetbrains.exposed:exposed-jodatime:0.41.1")
+    implementation("joda-time:joda-time:2.12.5")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.41.1")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

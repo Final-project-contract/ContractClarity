@@ -1,6 +1,8 @@
 package com.example.server
 
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.timestamp
 
 object Users : Table() {
     val id = integer("id").autoIncrement()
@@ -19,13 +21,25 @@ object Contracts : Table() {
     val filePath = varchar("file_path", 255)
     val fileSize = long("file_size")
     val contentType = varchar("content_type", 100)
+    val uploadTime = timestamp("upload_time")
 
     override val primaryKey = PrimaryKey(id)
 }
+
 object ContractSummaries : Table() {
     val id = integer("id").autoIncrement()
     val contractId = integer("contract_id").references(Contracts.id)
     val summaryText = text("summary_text")
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object CalendarEvents : Table() {
+    val id = integer("id").autoIncrement()
+    val userId = integer("user_id").references(Users.id)
+    val contractId = integer("contract_id").references(Contracts.id, onDelete = ReferenceOption.CASCADE)
+    val title = varchar("title", 255)
+    val date = long("date")
 
     override val primaryKey = PrimaryKey(id)
 }

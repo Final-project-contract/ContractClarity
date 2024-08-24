@@ -2,6 +2,7 @@ package com.example.server
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.ktor.http.ContentDisposition
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -23,7 +24,9 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondFile
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -31,7 +34,10 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.time.Instant
 import java.util.Date
+import java.util.UUID
 
 object Server {
     private val logger = LoggerFactory.getLogger(Server::class.java)
@@ -42,6 +48,7 @@ object Server {
     private val userDao = UserDao()
     private val contractDao = ContractDao()
     private val contractSummaryDao = ContractSummaryDao()
+    private val calendarEventDao = CalendarEventDao()
 
     fun start() {
         org.apache.log4j.BasicConfigurator.configure()
@@ -146,13 +153,20 @@ object Server {
                         }
 
                         if (fileBytes != null) {
-                            val filePath = "/uploads/contracts/$fileName"
+                            val uploadDir = File("uploads/contracts")
+                            uploadDir.mkdirs()
+                            val file = File(uploadDir, "${UUID.randomUUID()}_$fileName")
+                            file.writeBytes(fileBytes!!)
+
+                            val filePath = file.absolutePath
+                            val uploadTime = Instant.now().toEpochMilli()
                             val contract = Contract(
                                 userId = userId,
                                 name = fileName,
                                 filePath = filePath,
                                 fileSize = fileBytes!!.size.toLong(),
-                                contentType = contentType
+                                contentType = contentType,
+                                uploadTime = uploadTime
                             )
                             val contractId = contractDao.create(contract)
                             if (contractId != null) {
@@ -185,6 +199,37 @@ object Server {
                     } catch (e: Exception) {
                         logger.error("Error fetching contracts: ${e.message}", e)
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching contracts: ${e.message}")
+                    }
+                }
+
+                get("/contracts/{id}/file") {
+                    try {
+                        val contractId = call.parameters["id"]?.toIntOrNull()
+                        if (contractId == null) {
+                            call.respond(HttpStatusCode.BadRequest, "Invalid contract ID")
+                            return@get
+                        }
+
+                        val contract = contractDao.findById(contractId)
+                        if (contract == null) {
+                            call.respond(HttpStatusCode.NotFound, "Contract not found")
+                            return@get
+                        }
+
+                        val file = File(contract.filePath)
+                        if (!file.exists()) {
+                            call.respond(HttpStatusCode.NotFound, "Contract file not found")
+                            return@get
+                        }
+
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, contract.name).toString()
+                        )
+                        call.respondFile(file)
+                    } catch (e: Exception) {
+                        logger.error("Error serving contract file: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while serving the contract file")
                     }
                 }
 
@@ -245,6 +290,46 @@ object Server {
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching the user profile")
                     }
                 }
+
+
+                post("/calendar-events") {
+                    try {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+                        if (userId == null) {
+                            logger.warn("Invalid token: userId is null")
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid token")
+                            return@post
+                        }
+
+                        val event = call.receive<CalendarEvent>()
+                        logger.info("Attempting to create calendar event for user $userId")
+                        val eventId = calendarEventDao.create(event.copy(userId = userId))
+                        if (eventId != null) {
+                            logger.info("Calendar event created successfully with ID: $eventId")
+                            call.respond(HttpStatusCode.Created, mapOf("eventId" to eventId))
+                        } else {
+                            logger.error("Failed to create calendar event in database")
+                            call.respond(HttpStatusCode.BadRequest, "Failed to create calendar event")
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Error creating calendar event: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while creating the calendar event")
+                    }
+                }
+                get("/calendar-events") {
+                    try {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+                        if (userId == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid token")
+                            return@get
+                        }
+                        val events = calendarEventDao.findAllByUserId(userId)
+                        call.respond(events)
+                    } catch (e: Exception) {
+                        logger.error("Error fetching calendar events: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching calendar events")
+                    }
+                }
             }
         }
     }
@@ -260,7 +345,7 @@ object Server {
 
     private fun updateDatabaseSchema() {
         transaction {
-            SchemaUtils.create(Users, Contracts, ContractSummaries)
+            SchemaUtils.create(Users, Contracts, ContractSummaries, CalendarEvents)
 
             // Check if the content_type column exists
             val contentTypeExists = try {
@@ -277,9 +362,27 @@ object Server {
                 // exec("ALTER TABLE contracts ADD COLUMN content_type VARCHAR(100)")
             }
 
+            // Check if the upload_time column exists
+            val uploadTimeExists = try {
+                Contracts.columns.any { it.name == "upload_time" }
+            } catch (e: Exception) {
+                false
+            }
+
+            if (!uploadTimeExists) {
+                // Add the upload_time column
+                SchemaUtils.createMissingTablesAndColumns(Contracts)
+
+                // If the above doesn't work, try this raw SQL approach:
+                // exec("ALTER TABLE contracts ADD COLUMN upload_time TIMESTAMP")
+            }
+
+            SchemaUtils.createMissingTablesAndColumns(CalendarEvents)
+
             commit()
         }
     }
+
     private fun createJwtToken(userId: Int): String {
         return JWT.create()
             .withAudience(AUDIENCE)

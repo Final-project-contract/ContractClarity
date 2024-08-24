@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
+import java.time.Instant
 
 class ContractDao {
     private val logger = LoggerFactory.getLogger(ContractDao::class.java)
@@ -19,6 +20,7 @@ class ContractDao {
                     it[filePath] = contract.filePath
                     it[fileSize] = contract.fileSize
                     it[contentType] = contract.contentType
+                    it[uploadTime] = Instant.now()
                 } get Contracts.id
                 logger.info("Contract created successfully with ID: $id")
                 id
@@ -29,6 +31,7 @@ class ContractDao {
             null
         }
     }
+
     fun findById(id: Int): Contract? {
         return try {
             transaction {
@@ -61,7 +64,8 @@ class ContractDao {
             name = row[Contracts.name],
             filePath = row[Contracts.filePath],
             fileSize = row[Contracts.fileSize],
-            contentType = row[Contracts.contentType]
+            contentType = row[Contracts.contentType],
+            uploadTime = row[Contracts.uploadTime].toEpochMilli()
         )
 }
 
@@ -71,5 +75,6 @@ data class Contract(
     val name: String,
     val filePath: String,
     val fileSize: Long,
-    val contentType: String
+    val contentType: String,
+    val uploadTime: Long? = null
 )

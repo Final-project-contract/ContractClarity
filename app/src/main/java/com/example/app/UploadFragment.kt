@@ -13,11 +13,14 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
+import com.example.server.CalendarEvent
+import com.example.server.CalendarEventDao
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import io.ktor.client.HttpClient
@@ -36,13 +39,18 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
     private lateinit var uploadButton: ImageView
     private lateinit var selectedFileTextView: TextView
+    private lateinit var loadingProgressBar: ProgressBar
     private lateinit var tokenManager: TokenManager
     private var lastUploadedContractId: Int? = null
+    private var selectedFileName: String? = null
+    private val calendarEventDao = CalendarEventDao()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +66,7 @@ class UploadFragment : Fragment() {
         uploadButton = view.findViewById(R.id.uploadIcon)
         selectedFileTextView = view.findViewById(R.id.selectedFileTextView)
         summaryTextView = view.findViewById(R.id.summaryTextView)
+        loadingProgressBar = view.findViewById(R.id.loadingProgressBar)
         tokenManager = TokenManager(requireContext())
 
         uploadButton.setOnClickListener {
@@ -76,9 +85,23 @@ class UploadFragment : Fragment() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             data?.data?.let { uri ->
+                selectedFileName = getFileNameFromUri(uri)
                 showCustomFileNameDialog(uri)
             }
         }
+    }
+
+    private fun getFileNameFromUri(uri: Uri): String {
+        val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val displayNameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (displayNameIndex != -1) {
+                    return it.getString(displayNameIndex)
+                }
+            }
+        }
+        return uri.lastPathSegment ?: "Unknown file"
     }
 
     private fun showCustomFileNameDialog(fileUri: Uri) {
@@ -87,10 +110,13 @@ class UploadFragment : Fragment() {
         val dialogView = inflater.inflate(R.layout.dialog_custom_file_name, null)
 
         val fileNameEditText = dialogView.findViewById<EditText>(R.id.fileNameEditText)
+        fileNameEditText.setText(selectedFileName)
 
         builder.setView(dialogView)
             .setPositiveButton("Upload") { _, _ ->
                 val fileName = fileNameEditText.text.toString()
+                selectedFileName = fileName
+                selectedFileTextView.text = "Selected file: $fileName"
                 uploadContractToServer(fileUri, fileName)
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -101,10 +127,11 @@ class UploadFragment : Fragment() {
         dialog.show()
     }
 
-
     private fun uploadContractToServer(fileUri: Uri, fileName: String) {
         lifecycleScope.launch {
             try {
+                showLoading(true)
+
                 val token = tokenManager.getToken() ?: throw Exception("No token found")
                 Log.d("UploadFragment", "Token retrieved: ${token.take(10)}...")
 
@@ -139,20 +166,25 @@ class UploadFragment : Fragment() {
                     if (contractId != null) {
                         lastUploadedContractId = contractId
                         showToast("Contract uploaded successfully")
+                        selectedFileTextView.text = "Uploaded file: $fileName"
                         summarizePdf(fileUri, requireContext())
                     } else {
                         showToast("Failed to get contract ID")
+                        showLoading(false)
                     }
                 } else {
                     showToast("Failed to upload contract: ${response.status}")
+                    showLoading(false)
                 }
                 client.close()
             } catch (e: Exception) {
                 Log.e("UploadFragment", "Error uploading contract", e)
                 showToast("Error: ${e.message}")
+                showLoading(false)
             }
         }
     }
+
     private fun summarizePdf(pdfUri: Uri, context: Context) {
         lifecycleScope.launch {
             try {
@@ -165,19 +197,58 @@ class UploadFragment : Fragment() {
 
                 activity?.runOnUiThread {
                     summaryTextView.text = summary
+                    showLoading(false)
+                    summaryTextView.visibility = View.VISIBLE
                 }
 
-                // Save the summary to the server
                 saveSummaryToServer(summary)
+                createCalendarEventsFromSummary(summary, lastUploadedContractId)
             } catch (e: Exception) {
-                e.printStackTrace()
-                val errorBody = if (e is retrofit2.HttpException) e.response()?.errorBody()?.string() else null
-                activity?.runOnUiThread {
-                    summaryTextView.text = "Error: ${e.message}\nError Body: $errorBody"
+                // Exception handling
+            }
+        }
+    }
+
+    private suspend fun createCalendarEventsFromSummary(summary: String, contractId: Int?) {
+        contractId?.let { id ->
+            // Look for "IMPORTANT DATES:" in the summary
+            val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
+            if (importantDatesIndex != -1) {
+                // Extract the important dates text
+                val importantDatesText = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim()
+                val importantDates = importantDatesText.split("\n").map { it.trim() }
+
+                importantDates.forEach { dateString ->
+                    val dateAndEvent = dateString.split(" ", limit = 2)
+                    if (dateAndEvent.size == 2) {
+                        val date = parseDate(dateAndEvent[0])
+                        val eventTitle = dateAndEvent[1]
+
+                        if (date != null) {
+                            val event = CalendarEvent(
+                                userId = getCurrentUserId(),
+                                contractId = id,
+                                title = eventTitle,
+                                date = date
+                            )
+                            calendarEventDao.create(event)
+                        }
+                    }
                 }
             }
         }
     }
+
+    private fun parseDate(dateString: String): Long? {
+        return try {
+            val formatter = SimpleDateFormat("M-d-yyyy", Locale.getDefault())
+            formatter.parse(dateString)?.time
+        } catch (e: Exception) {
+            Log.e("UploadFragment", "Date parsing failed for: $dateString", e)
+            null
+        }
+    }
+
 
     private suspend fun saveSummaryToServer(summary: String) {
         try {
@@ -207,12 +278,46 @@ class UploadFragment : Fragment() {
         } catch (e: Exception) {
             showToast("Error saving summary: ${e.message}")
         }
+    }
 
+    private suspend fun createContractRelatedCalendarEvents(summary: String, contractId: Int?) {
+        contractId?.let { id ->
+            val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
+            if (importantDatesIndex != -1) {
+                val importantDates = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim().split("\n")
+                importantDates.forEach { dateString ->
+                    val date = dateString.trim().toLongOrNull()
+                    if (date != null) {
+                        val event = CalendarEvent(userId = getCurrentUserId(), contractId = id, title = "Contract Deadline", date = date)
+                        calendarEventDao.create(event)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun createUserSpecificCalendarEvents() {
+        // TODO: Implement logic to create user-specific calendar events
+    }
+
+    private fun getCurrentUserId(): Int {
+        // Implement this method to get the current user's ID from your authentication system
+        val token = tokenManager.getToken() ?: throw Exception("No token found")
+        // Decode the token and extract the user ID
+        // This is a placeholder implementation
+        return 1 // Replace with actual user ID extraction
     }
 
     private fun showToast(message: String) {
         activity?.runOnUiThread {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        activity?.runOnUiThread {
+            loadingProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            summaryTextView.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
     }
 
@@ -231,7 +336,7 @@ class UploadFragment : Fragment() {
                     role = "user",
                     content = listOf(
                         Content(
-                            text = "Write a professional concise summary of the next contract to a customer without legal proficiency:$content",
+                            text = "give me a concise summary of the contract without and introduction and write at the bottom of the output write: IMPORTANT DATES: * list all the important dates in the contract here ONLY if specific dates are specified if not dont write IMPORTANT DATES: at all if there are specified dates write them in this format example: 1-1-1998 payment is due if given a range of dates use the latest date example: if given 1.1.1998-2.2.1999 then the output would be 2-2-1999 end of contract:$content",
                             type = "text"
                         )
                     )
