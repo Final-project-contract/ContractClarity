@@ -48,6 +48,7 @@ object Server {
     private val userDao = UserDao()
     private val contractDao = ContractDao()
     private val contractSummaryDao = ContractSummaryDao()
+    private val calendarEventDao = CalendarEventDao()
 
     fun start() {
         org.apache.log4j.BasicConfigurator.configure()
@@ -289,6 +290,46 @@ object Server {
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching the user profile")
                     }
                 }
+
+
+                post("/calendar-events") {
+                    try {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+                        if (userId == null) {
+                            logger.warn("Invalid token: userId is null")
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid token")
+                            return@post
+                        }
+
+                        val event = call.receive<CalendarEvent>()
+                        logger.info("Attempting to create calendar event for user $userId")
+                        val eventId = calendarEventDao.create(event.copy(userId = userId))
+                        if (eventId != null) {
+                            logger.info("Calendar event created successfully with ID: $eventId")
+                            call.respond(HttpStatusCode.Created, mapOf("eventId" to eventId))
+                        } else {
+                            logger.error("Failed to create calendar event in database")
+                            call.respond(HttpStatusCode.BadRequest, "Failed to create calendar event")
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Error creating calendar event: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while creating the calendar event")
+                    }
+                }
+                get("/calendar-events") {
+                    try {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+                        if (userId == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid token")
+                            return@get
+                        }
+                        val events = calendarEventDao.findAllByUserId(userId)
+                        call.respond(events)
+                    } catch (e: Exception) {
+                        logger.error("Error fetching calendar events: ${e.message}")
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching calendar events")
+                    }
+                }
             }
         }
     }
@@ -304,7 +345,7 @@ object Server {
 
     private fun updateDatabaseSchema() {
         transaction {
-            SchemaUtils.create(Users, Contracts, ContractSummaries)
+            SchemaUtils.create(Users, Contracts, ContractSummaries, CalendarEvents)
 
             // Check if the content_type column exists
             val contentTypeExists = try {
@@ -335,6 +376,8 @@ object Server {
                 // If the above doesn't work, try this raw SQL approach:
                 // exec("ALTER TABLE contracts ADD COLUMN upload_time TIMESTAMP")
             }
+
+            SchemaUtils.createMissingTablesAndColumns(CalendarEvents)
 
             commit()
         }
