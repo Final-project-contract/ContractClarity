@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -35,13 +36,14 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.InputStream
-
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
     private lateinit var uploadButton: Button
     private lateinit var selectedFileTextView: TextView
+    private lateinit var loadingProgressBar: ProgressBar
     private lateinit var tokenManager: TokenManager
     private var lastUploadedContractId: Int? = null
+    private var selectedFileName: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -57,6 +59,7 @@ class UploadFragment : Fragment() {
         uploadButton = view.findViewById(R.id.uploadButton)
         selectedFileTextView = view.findViewById(R.id.selectedFileTextView)
         summaryTextView = view.findViewById(R.id.summaryTextView)
+        loadingProgressBar = view.findViewById(R.id.loadingProgressBar)
         tokenManager = TokenManager(requireContext())
 
         uploadButton.setOnClickListener {
@@ -75,9 +78,23 @@ class UploadFragment : Fragment() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             data?.data?.let { uri ->
+                selectedFileName = getFileNameFromUri(uri)
                 showCustomFileNameDialog(uri)
             }
         }
+    }
+
+    private fun getFileNameFromUri(uri: Uri): String {
+        val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val displayNameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (displayNameIndex != -1) {
+                    return it.getString(displayNameIndex)
+                }
+            }
+        }
+        return uri.lastPathSegment ?: "Unknown file"
     }
 
     private fun showCustomFileNameDialog(fileUri: Uri) {
@@ -86,10 +103,13 @@ class UploadFragment : Fragment() {
         val dialogView = inflater.inflate(R.layout.dialog_custom_file_name, null)
 
         val fileNameEditText = dialogView.findViewById<EditText>(R.id.fileNameEditText)
+        fileNameEditText.setText(selectedFileName)
 
         builder.setView(dialogView)
             .setPositiveButton("Upload") { _, _ ->
                 val fileName = fileNameEditText.text.toString()
+                selectedFileName = fileName
+                selectedFileTextView.text = "Selected file: $fileName"
                 uploadContractToServer(fileUri, fileName)
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -100,10 +120,11 @@ class UploadFragment : Fragment() {
         dialog.show()
     }
 
-
     private fun uploadContractToServer(fileUri: Uri, fileName: String) {
         lifecycleScope.launch {
             try {
+                showLoading(true)
+
                 val token = tokenManager.getToken() ?: throw Exception("No token found")
                 Log.d("UploadFragment", "Token retrieved: ${token.take(10)}...")
 
@@ -138,20 +159,25 @@ class UploadFragment : Fragment() {
                     if (contractId != null) {
                         lastUploadedContractId = contractId
                         showToast("Contract uploaded successfully")
+                        selectedFileTextView.text = "Uploaded file: $fileName"
                         summarizePdf(fileUri, requireContext())
                     } else {
                         showToast("Failed to get contract ID")
+                        showLoading(false)
                     }
                 } else {
                     showToast("Failed to upload contract: ${response.status}")
+                    showLoading(false)
                 }
                 client.close()
             } catch (e: Exception) {
                 Log.e("UploadFragment", "Error uploading contract", e)
                 showToast("Error: ${e.message}")
+                showLoading(false)
             }
         }
     }
+
     private fun summarizePdf(pdfUri: Uri, context: Context) {
         lifecycleScope.launch {
             try {
@@ -164,15 +190,18 @@ class UploadFragment : Fragment() {
 
                 activity?.runOnUiThread {
                     summaryTextView.text = summary
+                    showLoading(false)
+                    summaryTextView.visibility = View.VISIBLE
                 }
 
-                // Save the summary to the server
                 saveSummaryToServer(summary)
             } catch (e: Exception) {
                 e.printStackTrace()
                 val errorBody = if (e is retrofit2.HttpException) e.response()?.errorBody()?.string() else null
                 activity?.runOnUiThread {
                     summaryTextView.text = "Error: ${e.message}\nError Body: $errorBody"
+                    showLoading(false)
+                    summaryTextView.visibility = View.VISIBLE
                 }
             }
         }
@@ -206,12 +235,18 @@ class UploadFragment : Fragment() {
         } catch (e: Exception) {
             showToast("Error saving summary: ${e.message}")
         }
-
     }
 
     private fun showToast(message: String) {
         activity?.runOnUiThread {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        activity?.runOnUiThread {
+            loadingProgressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            summaryTextView.visibility = if (isLoading) View.GONE else View.VISIBLE
         }
     }
 
@@ -230,8 +265,7 @@ class UploadFragment : Fragment() {
                     role = "user",
                     content = listOf(
                         Content(
-                            text = "give me a concise summary of the contract without and introduction and write at the bottom of the output write: IMPORTANT DATES: * list all the important dates in the contract here ONLY if specific dates are specified if not dont write IMPORTANT DATES: at all if there are specified dates write them in this format example: 1-1-1998 payment is due if given a range of dates use the latest date example: if given 1.1.1998-2.2.1999 then the output would be 2-2-1999 end of contract:$content",
-                            type = "text"
+                            text = "give me a concise summary of the contract without and introduction and write at the bottom of the output write: IMPORTANT DATES: * list all the important dates in the contract here ONLY if specific dates are specified if not dont write IMPORTANT DATES: at all if there are specified dates write them in this format example: 1-1-1998 payment is due if given a range of dates use the latest date example: if given 1.1.1998-2.2.1999 then the output would be 2-2-1999 end of contract:$content",                            type = "text"
                         )
                     )
                 )
