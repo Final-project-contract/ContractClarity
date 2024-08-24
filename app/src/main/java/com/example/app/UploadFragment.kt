@@ -18,6 +18,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
+import com.example.server.CalendarEvent
+import com.example.server.CalendarEventDao
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import io.ktor.client.HttpClient
@@ -36,6 +38,9 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
     private lateinit var uploadButton: Button
@@ -44,6 +49,7 @@ class UploadFragment : Fragment() {
     private lateinit var tokenManager: TokenManager
     private var lastUploadedContractId: Int? = null
     private var selectedFileName: String? = null
+    private val calendarEventDao = CalendarEventDao()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -195,17 +201,53 @@ class UploadFragment : Fragment() {
                 }
 
                 saveSummaryToServer(summary)
+                createCalendarEventsFromSummary(summary, lastUploadedContractId)
             } catch (e: Exception) {
-                e.printStackTrace()
-                val errorBody = if (e is retrofit2.HttpException) e.response()?.errorBody()?.string() else null
-                activity?.runOnUiThread {
-                    summaryTextView.text = "Error: ${e.message}\nError Body: $errorBody"
-                    showLoading(false)
-                    summaryTextView.visibility = View.VISIBLE
+                // Exception handling
+            }
+        }
+    }
+
+    private suspend fun createCalendarEventsFromSummary(summary: String, contractId: Int?) {
+        contractId?.let { id ->
+            // Look for "IMPORTANT DATES:" in the summary
+            val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
+            if (importantDatesIndex != -1) {
+                // Extract the important dates text
+                val importantDatesText = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim()
+                val importantDates = importantDatesText.split("\n").map { it.trim() }
+
+                importantDates.forEach { dateString ->
+                    val dateAndEvent = dateString.split(" ", limit = 2)
+                    if (dateAndEvent.size == 2) {
+                        val date = parseDate(dateAndEvent[0])
+                        val eventTitle = dateAndEvent[1]
+
+                        if (date != null) {
+                            val event = CalendarEvent(
+                                userId = getCurrentUserId(),
+                                contractId = id,
+                                title = eventTitle,
+                                date = date
+                            )
+                            calendarEventDao.create(event)
+                        }
+                    }
                 }
             }
         }
     }
+
+    private fun parseDate(dateString: String): Long? {
+        return try {
+            val formatter = SimpleDateFormat("M-d-yyyy", Locale.getDefault())
+            formatter.parse(dateString)?.time
+        } catch (e: Exception) {
+            Log.e("UploadFragment", "Date parsing failed for: $dateString", e)
+            null
+        }
+    }
+
 
     private suspend fun saveSummaryToServer(summary: String) {
         try {
@@ -237,6 +279,34 @@ class UploadFragment : Fragment() {
         }
     }
 
+    private suspend fun createContractRelatedCalendarEvents(summary: String, contractId: Int?) {
+        contractId?.let { id ->
+            val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
+            if (importantDatesIndex != -1) {
+                val importantDates = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim().split("\n")
+                importantDates.forEach { dateString ->
+                    val date = dateString.trim().toLongOrNull()
+                    if (date != null) {
+                        val event = CalendarEvent(userId = getCurrentUserId(), contractId = id, title = "Contract Deadline", date = date)
+                        calendarEventDao.create(event)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun createUserSpecificCalendarEvents() {
+        // TODO: Implement logic to create user-specific calendar events
+    }
+
+    private fun getCurrentUserId(): Int {
+        // Implement this method to get the current user's ID from your authentication system
+        val token = tokenManager.getToken() ?: throw Exception("No token found")
+        // Decode the token and extract the user ID
+        // This is a placeholder implementation
+        return 1 // Replace with actual user ID extraction
+    }
+
     private fun showToast(message: String) {
         activity?.runOnUiThread {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -265,7 +335,8 @@ class UploadFragment : Fragment() {
                     role = "user",
                     content = listOf(
                         Content(
-                            text = "give me a concise summary of the contract without and introduction and write at the bottom of the output write: IMPORTANT DATES: * list all the important dates in the contract here ONLY if specific dates are specified if not dont write IMPORTANT DATES: at all if there are specified dates write them in this format example: 1-1-1998 payment is due if given a range of dates use the latest date example: if given 1.1.1998-2.2.1999 then the output would be 2-2-1999 end of contract:$content",                            type = "text"
+                            text = "give me a concise summary of the contract without and introduction and write at the bottom of the output write: IMPORTANT DATES: * list all the important dates in the contract here ONLY if specific dates are specified if not dont write IMPORTANT DATES: at all if there are specified dates write them in this format example: 1-1-1998 payment is due if given a range of dates use the latest date example: if given 1.1.1998-2.2.1999 then the output would be 2-2-1999 end of contract:$content",
+                            type = "text"
                         )
                     )
                 )
