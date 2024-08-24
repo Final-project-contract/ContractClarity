@@ -2,6 +2,7 @@ package com.example.server
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.ktor.http.ContentDisposition
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
@@ -23,7 +24,9 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondFile
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -31,7 +34,10 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.time.Instant
 import java.util.Date
+import java.util.UUID
 
 object Server {
     private val logger = LoggerFactory.getLogger(Server::class.java)
@@ -146,13 +152,20 @@ object Server {
                         }
 
                         if (fileBytes != null) {
-                            val filePath = "/uploads/contracts/$fileName"
+                            val uploadDir = File("uploads/contracts")
+                            uploadDir.mkdirs()
+                            val file = File(uploadDir, "${UUID.randomUUID()}_$fileName")
+                            file.writeBytes(fileBytes!!)
+
+                            val filePath = file.absolutePath
+                            val uploadTime = Instant.now().toEpochMilli()
                             val contract = Contract(
                                 userId = userId,
                                 name = fileName,
                                 filePath = filePath,
                                 fileSize = fileBytes!!.size.toLong(),
-                                contentType = contentType
+                                contentType = contentType,
+                                uploadTime = uploadTime
                             )
                             val contractId = contractDao.create(contract)
                             if (contractId != null) {
@@ -185,6 +198,37 @@ object Server {
                     } catch (e: Exception) {
                         logger.error("Error fetching contracts: ${e.message}", e)
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching contracts: ${e.message}")
+                    }
+                }
+
+                get("/contracts/{id}/file") {
+                    try {
+                        val contractId = call.parameters["id"]?.toIntOrNull()
+                        if (contractId == null) {
+                            call.respond(HttpStatusCode.BadRequest, "Invalid contract ID")
+                            return@get
+                        }
+
+                        val contract = contractDao.findById(contractId)
+                        if (contract == null) {
+                            call.respond(HttpStatusCode.NotFound, "Contract not found")
+                            return@get
+                        }
+
+                        val file = File(contract.filePath)
+                        if (!file.exists()) {
+                            call.respond(HttpStatusCode.NotFound, "Contract file not found")
+                            return@get
+                        }
+
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, contract.name).toString()
+                        )
+                        call.respondFile(file)
+                    } catch (e: Exception) {
+                        logger.error("Error serving contract file: ${e.message}", e)
+                        call.respond(HttpStatusCode.InternalServerError, "An error occurred while serving the contract file")
                     }
                 }
 
@@ -277,9 +321,25 @@ object Server {
                 // exec("ALTER TABLE contracts ADD COLUMN content_type VARCHAR(100)")
             }
 
+            // Check if the upload_time column exists
+            val uploadTimeExists = try {
+                Contracts.columns.any { it.name == "upload_time" }
+            } catch (e: Exception) {
+                false
+            }
+
+            if (!uploadTimeExists) {
+                // Add the upload_time column
+                SchemaUtils.createMissingTablesAndColumns(Contracts)
+
+                // If the above doesn't work, try this raw SQL approach:
+                // exec("ALTER TABLE contracts ADD COLUMN upload_time TIMESTAMP")
+            }
+
             commit()
         }
     }
+
     private fun createJwtToken(userId: Int): String {
         return JWT.create()
             .withAudience(AUDIENCE)

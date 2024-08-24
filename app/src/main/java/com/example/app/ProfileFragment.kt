@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,10 +20,18 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.readBytes
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ProfileFragment : Fragment() {
     private lateinit var usernameTextView: TextView
@@ -73,7 +82,9 @@ class ProfileFragment : Fragment() {
                 }
 
                 if (contractsResponse.status.isSuccess()) {
-                    val contractsJson = JSONArray(contractsResponse.bodyAsText())
+                    val responseBody = contractsResponse.bodyAsText()
+                    Log.d("ProfileFragment", "Contracts response: $responseBody")
+                    val contractsJson = JSONArray(responseBody)
                     val contracts = mutableListOf<Contract>()
                     for (i in 0 until contractsJson.length()) {
                         val contractObj = contractsJson.getJSONObject(i)
@@ -81,7 +92,8 @@ class ProfileFragment : Fragment() {
                             id = contractObj.getInt("id"),
                             name = contractObj.getString("name"),
                             contentType = contractObj.getString("contentType"),
-                            fileName = contractObj.getString("name") + ".pdf"
+                            fileName = ensureFileExtension(contractObj.getString("name"), ".pdf"),
+                            uploadTime = if (contractObj.has("uploadTime")) contractObj.getLong("uploadTime") else null
                         ))
                     }
                     contractsRecyclerView.adapter = ContractAdapter(
@@ -103,9 +115,60 @@ class ProfileFragment : Fragment() {
         }
     }
 
+    private fun ensureFileExtension(fileName: String, extension: String): String {
+        return if (fileName.toLowerCase().endsWith(extension.toLowerCase())) {
+            fileName
+        } else {
+            "$fileName$extension"
+        }
+    }
+
     private fun openContract(contract: Contract) {
-        // Implement logic to open the contract
-        Toast.makeText(context, "Opening contract: ${contract.name}", Toast.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val token = tokenManager.getToken() ?: throw Exception("No token found")
+                val client = HttpClient()
+
+                // Fetch the contract file
+                val fileResponse: HttpResponse = client.get("http://10.0.2.2:8080/contracts/${contract.id}/file") {
+                    header("Authorization", "Bearer $token")
+                }
+
+                if (fileResponse.status.isSuccess()) {
+                    val fileBytes = fileResponse.readBytes()
+
+                    // Save the file locally
+                    val file = saveFileLocally(contract.fileName, fileBytes)
+
+                    // Open the file
+                    openFile(file, contract.contentType)
+                } else {
+                    throw Exception("Failed to fetch contract file: ${fileResponse.status}")
+                }
+
+                client.close()
+            } catch (e: Exception) {
+                Log.e("ProfileFragment", "Error opening contract", e)
+                activity?.runOnUiThread {
+                    Toast.makeText(context, "Error opening contract: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun saveFileLocally(fileName: String, fileBytes: ByteArray): File = withContext(Dispatchers.IO) {
+        val file = File(requireContext().filesDir, fileName)
+        FileOutputStream(file).use { it.write(fileBytes) }
+        file
+    }
+
+    private fun openFile(file: File, mimeType: String) {
+        val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        startActivity(Intent.createChooser(intent, "Open Contract"))
     }
 
     private fun fetchAndShowSummary(contractId: Int) {
@@ -147,7 +210,8 @@ data class Contract(
     val id: Int,
     val name: String,
     val contentType: String,
-    val fileName: String
+    val fileName: String,
+    val uploadTime: Long? = null
 )
 
 class ContractAdapter(
@@ -172,7 +236,7 @@ class ContractAdapter(
     override fun onBindViewHolder(holder: ContractViewHolder, position: Int) {
         val contract = contracts[position]
         holder.contractNameTextView.text = contract.name
-        holder.contractDateTextView.text = "Date placeholder" // Replace with actual date if available
+        holder.contractDateTextView.text = formatDate(contract.uploadTime)
 
         holder.openContractButton.setOnClickListener {
             onContractClick(contract)
@@ -184,4 +248,13 @@ class ContractAdapter(
     }
 
     override fun getItemCount() = contracts.size
+
+    private fun formatDate(timestamp: Long?): String {
+        return if (timestamp != null) {
+            val sdf = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
+            sdf.format(Date(timestamp))
+        } else {
+            "Upload time not available"
+        }
+    }
 }

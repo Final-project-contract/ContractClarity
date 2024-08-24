@@ -1,6 +1,7 @@
 package com.example.server
 
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.timestamp
 
 object Users : Table() {
     val id = integer("id").autoIncrement()
@@ -19,9 +20,11 @@ object Contracts : Table() {
     val filePath = varchar("file_path", 255)
     val fileSize = long("file_size")
     val contentType = varchar("content_type", 100)
+    val uploadTime = timestamp("upload_time")
 
     override val primaryKey = PrimaryKey(id)
 }
+
 object ContractSummaries : Table() {
     val id = integer("id").autoIncrement()
     val contractId = integer("contract_id").references(Contracts.id)
