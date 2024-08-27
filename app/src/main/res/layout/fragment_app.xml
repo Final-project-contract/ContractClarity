@@ -30,25 +30,27 @@
 
     <Button
         android:id="@+id/loginButton"
-        android:layout_width="176dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/button_background"
+        android:layout_width="196dp"
+        android:layout_height="56dp"
         android:text="Login"
         android:textColor="@color/white"
+        android:backgroundTint="@color/navy_blue"
         app:layout_constraintBottom_toTopOf="@+id/registerButton"
         app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="17dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/LogoImg2"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <Button
         android:id="@+id/registerButton"
-        android:layout_width="176dp"
-        android:layout_height="wrap_content"
+        android:layout_width="196dp"
+        android:layout_height="56dp"
         android:layout_marginTop="16dp"
-        android:background="@drawable/button_background"
         android:text="Register"
+        android:textSize="17dp"
         android:textColor="@color/white"
+        android:backgroundTint="@color/navy_blue"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

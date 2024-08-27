@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
@@ -47,7 +48,7 @@ import java.util.Locale
 
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
-    private lateinit var uploadButton: Button
+    private lateinit var uploadButton: ImageView
     private lateinit var selectedFileTextView: TextView
     private lateinit var loadingProgressBar: ProgressBar
     private lateinit var tokenManager: TokenManager
@@ -73,7 +74,7 @@ class UploadFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        uploadButton = view.findViewById(R.id.uploadButton)
+        uploadButton = view.findViewById(R.id.uploadIcon)
         selectedFileTextView = view.findViewById(R.id.selectedFileTextView)
         summaryTextView = view.findViewById(R.id.summaryTextView)
         loadingProgressBar = view.findViewById(R.id.loadingProgressBar)

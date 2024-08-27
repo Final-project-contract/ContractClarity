@@ -11,68 +11,121 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:gravity="center">
+        android:padding="24dp"
+        android:gravity="center"
+        android:background="@color/white">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Login"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
+        <!-- Header Section with Icon -->
+        <ImageView
+            android:layout_width="216dp"
+            android:layout_height="143dp"
+            android:layout_marginBottom="15dp"
+            android:src="@drawable/cc_logo" />
 
+        <LinearLayout
+            android:layout_width="323dp"
+            android:layout_height="110dp"
+            android:layout_marginBottom="32dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <!-- Decorative Icon -->
+
+            <!-- Headline -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/sans_serif_medium"
+                android:text="Welcome Back!"
+                android:textColor="@color/navy_blue"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <!-- Subheading -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/sans_serif_light"
+                android:text="Login to your account"
+                android:textColor="@color/navy_blue"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Input Fields -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_marginBottom="18dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/primary">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Email"
-                android:inputType="textEmailAddress"/>
+                android:inputType="textEmailAddress"
+                android:textColor="@color/navy_blue"
+                android:textSize="16sp"
+                android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:passwordToggleEnabled="true">
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            app:passwordToggleEnabled="true"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/primary">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Password"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="@color/primary_dark"
+                android:textSize="16sp"
+                android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Login Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Login"
-            android:padding="12dp"/>
+            android:padding="16dp"
+            android:textSize="18sp"
+            android:fontFamily="@font/sans_serif_medium"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/light_blue"
+            app:cornerRadius="8dp"/>
 
+        <!-- Forgot Password Link -->
         <TextView
             android:id="@+id/textViewForgotPassword"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Forgot Password?"
-            android:textColor="@color/design_default_color_primary"
-            android:layout_marginTop="16dp"/>
+            android:textColor="@color/navy_blue"
+            android:layout_marginTop="16dp"
+            android:textSize="14sp"
+            android:fontFamily="@font/sans_serif_light"/>
 
+        <!-- Sign Up Link -->
         <TextView
             android:id="@+id/textViewSignUp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Don't have an account? Sign Up"
-            android:textColor="@color/design_default_color_primary"
-            android:layout_marginTop="16dp"/>
-
+            android:textColor="@color/light_blue"
+            android:layout_marginTop="24dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/sans_serif_medium"/>
     </LinearLayout>
 </ScrollView>
