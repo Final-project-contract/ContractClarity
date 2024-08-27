@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.5.0"
 }
 
 android {
@@ -41,9 +42,8 @@ android {
             kotlin.srcDirs("src/main/java")
         }
     }
-
-
 }
+
 configurations {
     create("serverRuntimeClasspath") {
         extendsFrom(configurations.getByName("implementation"))
@@ -52,7 +52,6 @@ configurations {
         }
     }
 }
-
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
@@ -97,10 +96,19 @@ dependencies {
     implementation("joda-time:joda-time:2.12.5")
     implementation("org.jetbrains.exposed:exposed-java-time:0.41.1")
 
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    implementation ("io.ktor:ktor-server-content-negotiation:2.3.7")
+    implementation ("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+
+    // Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
+
 tasks.register<JavaExec>("runServer") {
     group = "Execution"
     description = "Run the Ktor server"
@@ -117,4 +125,3 @@ tasks.register<JavaExec>("runServer") {
     environment("DB_USER", "postgres")
     environment("DB_PASSWORD", "235689")
 }
-

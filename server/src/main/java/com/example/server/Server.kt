@@ -301,12 +301,12 @@ object Server {
                             return@post
                         }
 
-                        val event = call.receive<CalendarEvent>()
+                        val eventData = call.receive<CalendarEventData>()
                         logger.info("Attempting to create calendar event for user $userId")
-                        val eventId = calendarEventDao.create(event.copy(userId = userId))
+                        val eventId = calendarEventDao.create(eventData.toCalendarEvent(userId))
                         if (eventId != null) {
                             logger.info("Calendar event created successfully with ID: $eventId")
-                            call.respond(HttpStatusCode.Created, mapOf("eventId" to eventId))
+                            call.respond(HttpStatusCode.Created, eventId)
                         } else {
                             logger.error("Failed to create calendar event in database")
                             call.respond(HttpStatusCode.BadRequest, "Failed to create calendar event")
@@ -390,6 +390,20 @@ object Server {
             .withClaim("userId", userId)
             .withExpiresAt(Date(System.currentTimeMillis() + 3600000)) // 1 hour expiration
             .sign(Algorithm.HMAC256(secret))
+    }
+}
+data class CalendarEventData(
+    val contractId: Int,
+    val title: String,
+    val date: Long
+) {
+    fun toCalendarEvent(userId: Int): CalendarEvent {
+        return CalendarEvent(
+            userId = userId,
+            contractId = contractId,
+            title = title,
+            date = date
+        )
     }
 }
 

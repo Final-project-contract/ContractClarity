@@ -19,11 +19,11 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
-import com.example.server.CalendarEvent
-import com.example.server.CalendarEventDao
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.header
@@ -36,10 +36,14 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class UploadFragment : Fragment() {
@@ -50,13 +54,20 @@ class UploadFragment : Fragment() {
     private lateinit var tokenManager: TokenManager
     private var lastUploadedContractId: Int? = null
     private var selectedFileName: String? = null
-    private val calendarEventDao = CalendarEventDao()
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
+    private val json = Json {
+        prettyPrint = true
+        isLenient = true
+        ignoreUnknownKeys = true
+    }
+
+    private val client = HttpClient(Android) {
+        install(ContentNegotiation) {
+            json(json)
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_upload, container, false)
     }
 
@@ -135,8 +146,6 @@ class UploadFragment : Fragment() {
                 val token = tokenManager.getToken() ?: throw Exception("No token found")
                 Log.d("UploadFragment", "Token retrieved: ${token.take(10)}...")
 
-                val client = HttpClient()
-
                 val inputStream = requireContext().contentResolver.openInputStream(fileUri)
                 val fileBytes = inputStream?.readBytes() ?: throw Exception("Cannot read file")
                 Log.d("UploadFragment", "File read successfully, size: ${fileBytes.size} bytes")
@@ -162,7 +171,7 @@ class UploadFragment : Fragment() {
 
                 if (response.status.isSuccess()) {
                     val responseBody = response.bodyAsText()
-                    val contractId = Json.decodeFromString<Map<String, Int>>(responseBody)["contractId"]
+                    val contractId = json.decodeFromString<Map<String, Int>>(responseBody)["contractId"]
                     if (contractId != null) {
                         lastUploadedContractId = contractId
                         showToast("Contract uploaded successfully")
@@ -176,7 +185,6 @@ class UploadFragment : Fragment() {
                     showToast("Failed to upload contract: ${response.status}")
                     showLoading(false)
                 }
-                client.close()
             } catch (e: Exception) {
                 Log.e("UploadFragment", "Error uploading contract", e)
                 showToast("Error: ${e.message}")
@@ -190,10 +198,12 @@ class UploadFragment : Fragment() {
             try {
                 val inputStream = uriToInputStream(context, pdfUri)
                 val pdfText: String = extractData(inputStream)
-                Log.d("Extracted Text", pdfText)
+                Log.d("UploadFragment", "Extracted Text: $pdfText")
                 val request = createMessageRequest(pdfText)
                 val response = api.createMessage(request)
                 val summary = response.content.firstOrNull()?.text ?: "No summary available"
+
+                Log.d("UploadFragment", "Summary: $summary")
 
                 activity?.runOnUiThread {
                     summaryTextView.text = summary
@@ -204,51 +214,121 @@ class UploadFragment : Fragment() {
                 saveSummaryToServer(summary)
                 createCalendarEventsFromSummary(summary, lastUploadedContractId)
             } catch (e: Exception) {
-                // Exception handling
+                Log.e("UploadFragment", "Error in summarizePdf", e)
+                showToast("Error summarizing PDF: ${e.message}")
+                showLoading(false)
             }
         }
     }
 
     private suspend fun createCalendarEventsFromSummary(summary: String, contractId: Int?) {
+        Log.d("UploadFragment", "Creating calendar events from summary")
         contractId?.let { id ->
-            // Look for "IMPORTANT DATES:" in the summary
-            val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
-            if (importantDatesIndex != -1) {
-                // Extract the important dates text
-                val importantDatesText = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim()
-                val importantDates = importantDatesText.split("\n").map { it.trim() }
+            val importantDates = extractImportantDates(summary)
+            Log.d("UploadFragment", "Extracted important dates: $importantDates")
 
-                importantDates.forEach { dateString ->
-                    val dateAndEvent = dateString.split(" ", limit = 2)
-                    if (dateAndEvent.size == 2) {
-                        val date = parseDate(dateAndEvent[0])
-                        val eventTitle = dateAndEvent[1]
+            val userId = getCurrentUserId()
+            if (userId == null) {
+                Log.e("UploadFragment", "Failed to get current user ID")
+                showToast("Failed to create calendar events: User ID not found")
+                return
+            }
 
-                        if (date != null) {
-                            val event = CalendarEvent(
-                                userId = getCurrentUserId(),
-                                contractId = id,
-                                title = eventTitle,
-                                date = date
-                            )
-                            calendarEventDao.create(event)
+            var successCount = 0
+            var failureCount = 0
+
+            for ((date, eventTitle) in importantDates) {
+                Log.d("UploadFragment", "Attempting to create calendar event: $eventTitle on ${Date(date)}")
+                withContext(Dispatchers.IO) {
+                    try {
+                        val token = tokenManager.getToken() ?: throw Exception("No token found")
+                        val response: HttpResponse = client.post("http://10.0.2.2:8080/calendar-events") {
+                            header("Authorization", "Bearer $token")
+                            contentType(ContentType.Application.Json)
+                            setBody("""
+                            {
+                                "userId": $userId,
+                                "contractId": $id,
+                                "title": "$eventTitle",
+                                "date": $date
+                            }
+                        """.trimIndent())
                         }
+                        if (response.status.isSuccess()) {
+                            val responseBody = response.bodyAsText()
+                            val eventId = responseBody.toIntOrNull()
+                            Log.d("UploadFragment", "Created calendar event: $eventTitle on ${Date(date)} with ID: $eventId")
+                            successCount++
+                        } else {
+                            Log.e("UploadFragment", "Failed to create calendar event: $eventTitle. Status: ${response.status}")
+                            failureCount++
+                        }
+                    } catch (e: Exception) {
+                        Log.e("UploadFragment", "Error creating calendar event: ${e.message}", e)
+                        failureCount++
                     }
                 }
             }
+
+            val message = if (failureCount == 0) {
+                "Successfully created $successCount calendar events."
+            } else {
+                "Created $successCount calendar events. Failed to create $failureCount events."
+            }
+            showToast(message)
         }
+    }
+
+
+    private fun extractImportantDates(summary: String): List<Pair<Long, String>> {
+        val importantDates = mutableListOf<Pair<Long, String>>()
+        val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
+        if (importantDatesIndex != -1) {
+            val importantDatesText = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim()
+            val dateLines = importantDatesText.split("\n")
+
+            for (line in dateLines) {
+                val parts = line.trim().split(" ", limit = 2)
+                if (parts.size == 2) {
+                    val date = parseDate(parts[0])
+                    if (date != null) {
+                        importantDates.add(Pair(date, parts[1]))
+                    } else {
+                        Log.e("UploadFragment", "Failed to parse date: ${parts[0]}")
+                    }
+                } else {
+                    Log.e("UploadFragment", "Invalid date line format: $line")
+                }
+            }
+        } else {
+            Log.w("UploadFragment", "No IMPORTANT DATES section found in summary")
+        }
+        return importantDates
     }
 
     private fun parseDate(dateString: String): Long? {
-        return try {
-            val formatter = SimpleDateFormat("M-d-yyyy", Locale.getDefault())
-            formatter.parse(dateString)?.time
-        } catch (e: Exception) {
-            Log.e("UploadFragment", "Date parsing failed for: $dateString", e)
-            null
-        }
-    }
+        val formatters = listOf(
+            SimpleDateFormat("d-M-yyyy", Locale.US),
+            SimpleDateFormat("M-d-yyyy", Locale.US),
+            SimpleDateFormat("MM/dd/yyyy", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        )
 
+        for (formatter in formatters) {
+            try {
+                val date = formatter.parse(dateString)
+                if (date != null) {
+                    Log.d("UploadFragment", "Successfully parsed date: $dateString")
+                    return date.time
+                }
+            } catch (e: Exception) {
+                // Continue to next formatter
+            }
+        }
+
+        Log.e("UploadFragment", "Failed to parse date: $dateString")
+        return null
+    }
 
     private suspend fun saveSummaryToServer(summary: String) {
         try {
@@ -259,53 +339,37 @@ class UploadFragment : Fragment() {
             }
 
             val token = tokenManager.getToken() ?: throw Exception("No token found")
-            val client = HttpClient()
             val response: HttpResponse = client.post("http://10.0.2.2:8080/contracts/$contractId/summary") {
                 header("Authorization", "Bearer $token")
                 contentType(ContentType.Application.Json)
-                setBody("""
-                    {
-                        "summaryText": "$summary"
-                    }
-                """.trimIndent())
+                setBody(mapOf("summaryText" to summary))
             }
             if (response.status.isSuccess()) {
                 showToast("Summary saved successfully")
             } else {
                 showToast("Failed to save summary")
             }
-            client.close()
         } catch (e: Exception) {
             showToast("Error saving summary: ${e.message}")
         }
     }
 
-    private suspend fun createContractRelatedCalendarEvents(summary: String, contractId: Int?) {
-        contractId?.let { id ->
-            val importantDatesIndex = summary.indexOf("IMPORTANT DATES:")
-            if (importantDatesIndex != -1) {
-                val importantDates = summary.substring(importantDatesIndex + "IMPORTANT DATES:".length).trim().split("\n")
-                importantDates.forEach { dateString ->
-                    val date = dateString.trim().toLongOrNull()
-                    if (date != null) {
-                        val event = CalendarEvent(userId = getCurrentUserId(), contractId = id, title = "Contract Deadline", date = date)
-                        calendarEventDao.create(event)
-                    }
-                }
+    private fun getCurrentUserId(): Int? {
+        val token = tokenManager.getToken() ?: return null
+        return try {
+            val parts = token.split(".")
+            if (parts.size == 3) {
+                val payload = String(android.util.Base64.decode(parts[1], android.util.Base64.URL_SAFE))
+                val jsonObject = org.json.JSONObject(payload)
+                jsonObject.getInt("userId")
+            } else {
+                Log.e("UploadFragment", "Invalid token format")
+                null
             }
+        } catch (e: Exception) {
+            Log.e("UploadFragment", "Error extracting user ID from token: ${e.message}")
+            null
         }
-    }
-
-    private suspend fun createUserSpecificCalendarEvents() {
-        // TODO: Implement logic to create user-specific calendar events
-    }
-
-    private fun getCurrentUserId(): Int {
-        // Implement this method to get the current user's ID from your authentication system
-        val token = tokenManager.getToken() ?: throw Exception("No token found")
-        // Decode the token and extract the user ID
-        // This is a placeholder implementation
-        return 1 // Replace with actual user ID extraction
     }
 
     private fun showToast(message: String) {
@@ -326,7 +390,7 @@ class UploadFragment : Fragment() {
     }
 
     private fun createMessageRequest(content: String): MessageRequest {
-        Log.d("Content", content)
+        Log.d("UploadFragment", "Creating message request with content length: ${content.length}")
         return MessageRequest(
             model = "claude-3-5-sonnet-20240620",
             max_tokens = 1000,
@@ -356,7 +420,7 @@ class UploadFragment : Fragment() {
             pdfReader.close()
             return extractedText
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("UploadFragment", "Error extracting PDF text", e)
             return "Error: ${e.message}"
         }
     }
