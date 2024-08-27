@@ -14,7 +14,7 @@ class CalendarEventDao {
     fun create(event: CalendarEvent): Int? {
         return try {
             transaction {
-                logger.info("Attempting to create calendar event with userId: ${event.userId}, contractId: ${event.contractId}, title: ${event.title}, date: ${event.date}")
+                logger.info("Attempting to create calendar event: $event")
                 val id = CalendarEvents.insert {
                     it[userId] = event.userId
                     it[contractId] = event.contractId
@@ -30,12 +30,14 @@ class CalendarEventDao {
         }
     }
 
-
     fun findAllByUserId(userId: Int): List<CalendarEvent> {
         return try {
             transaction {
-                CalendarEvents.select { CalendarEvents.userId eq userId }
+                logger.info("Fetching calendar events for user ID: $userId")
+                val events = CalendarEvents.select { CalendarEvents.userId eq userId }
                     .mapNotNull { toCalendarEvent(it) }
+                logger.info("Found ${events.size} calendar events for user ID: $userId")
+                events
             }
         } catch (e: Exception) {
             logger.error("Error finding calendar events by user ID: ${e.message}", e)
@@ -46,8 +48,11 @@ class CalendarEventDao {
     fun findByContractId(contractId: Int): List<CalendarEvent> {
         return try {
             transaction {
-                CalendarEvents.select { CalendarEvents.contractId eq contractId }
+                logger.info("Fetching calendar events for contract ID: $contractId")
+                val events = CalendarEvents.select { CalendarEvents.contractId eq contractId }
                     .mapNotNull { toCalendarEvent(it) }
+                logger.info("Found ${events.size} calendar events for contract ID: $contractId")
+                events
             }
         } catch (e: Exception) {
             logger.error("Error finding calendar events by contract ID: ${e.message}", e)
@@ -58,7 +63,9 @@ class CalendarEventDao {
     fun deleteByContractId(contractId: Int): Boolean {
         return try {
             transaction {
+                logger.info("Attempting to delete calendar events for contract ID: $contractId")
                 val deletedCount = CalendarEvents.deleteWhere { CalendarEvents.contractId eq contractId }
+                logger.info("Deleted $deletedCount calendar events for contract ID: $contractId")
                 deletedCount > 0
             }
         } catch (e: Exception) {

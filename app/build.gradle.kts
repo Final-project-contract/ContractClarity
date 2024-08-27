@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
+    kotlin("plugin.serialization") version "1.5.0"
 }
 
 android {
@@ -23,7 +24,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -76,11 +77,15 @@ dependencies {
     // Ktor client
     implementation("io.ktor:ktor-client-android:2.3.7")
     implementation("io.ktor:ktor-client-serialization:2.3.7")
-    implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation ("io.ktor:ktor-client-core:2.3.7")
+    implementation ("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation ("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
-
+// Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 
     implementation(project(":server"))
 

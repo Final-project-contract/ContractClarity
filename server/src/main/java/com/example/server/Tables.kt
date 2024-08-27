@@ -1,6 +1,5 @@
 package com.example.server
 
-import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.javatime.timestamp
 
@@ -36,8 +35,8 @@ object ContractSummaries : Table() {
 
 object CalendarEvents : Table() {
     val id = integer("id").autoIncrement()
-    val userId = integer("user_id").references(Users.id)
-    val contractId = integer("contract_id").references(Contracts.id, onDelete = ReferenceOption.CASCADE)
+    val userId = integer("user_id")
+    val contractId = integer("contract_id")
     val title = varchar("title", 255)
     val date = long("date")
 
