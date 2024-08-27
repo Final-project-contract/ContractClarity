@@ -1,12 +1,12 @@
 package com.example.app
 
-import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CalendarView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -25,12 +25,16 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class CalendarFragment : Fragment() {
-    private lateinit var calendarView: CalendarView
+    private lateinit var customCalendarView: CustomCalendarView
+    private lateinit var eventsTextView: TextView
     private lateinit var tokenManager: TokenManager
     private val events = mutableListOf<CalendarEvent>()
+    private val calendar = Calendar.getInstance()
 
     private val client = HttpClient(Android)
 
@@ -40,12 +44,46 @@ class CalendarFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_calendar, container, false)
-        calendarView = view.findViewById(R.id.calendarView)
+        customCalendarView = view.findViewById(R.id.customCalendarView)
+        eventsTextView = view.findViewById(R.id.eventsTextView)
         tokenManager = TokenManager(requireContext())
 
+        setupCalendarView()
         loadCalendarEvents()
 
         return view
+    }
+
+    private fun setupCalendarView() {
+        customCalendarView.setOnDateChangeListener { year, month, dayOfMonth ->
+            calendar.set(year, month, dayOfMonth)
+            showEventsForDay(getEventsForSelectedDate())
+        }
+
+        customCalendarView.setOnMonthChangeListener { year, month ->
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            loadCalendarEvents()
+        }
+
+        customCalendarView.setOnHeaderClickListener {
+            showDatePicker()
+        }
+    }
+
+    private fun showDatePicker() {
+        val datePickerDialog = DatePickerDialog(
+            requireContext(),
+            { _, year, month, dayOfMonth ->
+                customCalendarView.setDate(year, month, dayOfMonth)
+                calendar.set(year, month, dayOfMonth)
+                showEventsForDay(getEventsForSelectedDate())
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+        datePickerDialog.show()
     }
 
     private fun loadCalendarEvents() {
@@ -60,7 +98,7 @@ class CalendarFragment : Fragment() {
                     val responseBody = response.bodyAsText()
                     events.clear()
                     events.addAll(parseCalendarEvents(responseBody))
-                    updateCalendarView()
+                    showEventsForDay(getEventsForSelectedDate())
                 } else {
                     throw Exception("Failed to fetch events: ${response.status}")
                 }
@@ -85,53 +123,26 @@ class CalendarFragment : Fragment() {
         }
     }
 
-    private fun updateCalendarView() {
-        events.forEach { event ->
-            addEventMarker(event.date)
+    private fun getEventsForSelectedDate(): List<CalendarEvent> {
+        return events.filter {
+            val eventCalendar = Calendar.getInstance().apply { timeInMillis = it.date }
+            eventCalendar.get(Calendar.YEAR) == calendar.get(Calendar.YEAR) &&
+                    eventCalendar.get(Calendar.MONTH) == calendar.get(Calendar.MONTH) &&
+                    eventCalendar.get(Calendar.DAY_OF_MONTH) == calendar.get(Calendar.DAY_OF_MONTH)
         }
-
-        calendarView.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            val selectedDate = Calendar.getInstance().apply {
-                set(year, month, dayOfMonth)
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-
-            val eventsForDay = events.filter {
-                val eventCalendar = Calendar.getInstance().apply { timeInMillis = it.date }
-                eventCalendar.get(Calendar.YEAR) == year &&
-                        eventCalendar.get(Calendar.MONTH) == month &&
-                        eventCalendar.get(Calendar.DAY_OF_MONTH) == dayOfMonth
-            }
-            showEventsForDay(eventsForDay)
-        }
-    }
-
-    private fun addEventMarker(date: Long) {
-        // This is a simplified version. You might need to implement a custom decorator
-        // for more advanced visual representation of events
-        calendarView.setDate(date, true, true)
     }
 
     private fun showEventsForDay(events: List<CalendarEvent>) {
         if (events.isEmpty()) {
-            showToast("No events for this day")
+            eventsTextView.text = "No events for this day"
             return
         }
 
-        val message = events.joinToString("\n") { it.title }
-        AlertDialog.Builder(requireContext())
-            .setTitle("Events for ${formatDate(events.first().date)}")
-            .setMessage(message)
-            .setPositiveButton("OK", null)
-            .show()
-    }
-
-    private fun formatDate(date: Long): String {
-        val calendar = Calendar.getInstance().apply { timeInMillis = date }
-        return "${calendar.get(Calendar.MONTH) + 1}/${calendar.get(Calendar.DAY_OF_MONTH)}/${calendar.get(Calendar.YEAR)}"
+        val dateFormat = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        val eventDate = dateFormat.format(calendar.time)
+        val eventList = events.joinToString("\n") { "• ${it.title}" }
+        val message = "Events for $eventDate:\n$eventList"
+        eventsTextView.text = message
     }
 
     private fun showToast(message: String) {
