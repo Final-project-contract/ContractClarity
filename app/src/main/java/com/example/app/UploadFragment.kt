@@ -10,7 +10,6 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
@@ -19,6 +18,8 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
+import com.example.server.CalendarEvent
+import com.example.server.CalendarEventDao
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
 import io.ktor.client.HttpClient
@@ -54,6 +55,7 @@ class UploadFragment : Fragment() {
     private lateinit var tokenManager: TokenManager
     private var lastUploadedContractId: Int? = null
     private var selectedFileName: String? = null
+    private val calendarEventDao = CalendarEventDao()
 
     private val json = Json {
         prettyPrint = true
@@ -241,28 +243,15 @@ class UploadFragment : Fragment() {
                 Log.d("UploadFragment", "Attempting to create calendar event: $eventTitle on ${Date(date)}")
                 withContext(Dispatchers.IO) {
                     try {
-                        val token = tokenManager.getToken() ?: throw Exception("No token found")
-                        val response: HttpResponse = client.post("http://10.0.2.2:8080/calendar-events") {
-                            header("Authorization", "Bearer $token")
-                            contentType(ContentType.Application.Json)
-                            setBody("""
-                            {
-                                "userId": $userId,
-                                "contractId": $id,
-                                "title": "$eventTitle",
-                                "date": $date
-                            }
-                        """.trimIndent())
-                        }
-                        if (response.status.isSuccess()) {
-                            val responseBody = response.bodyAsText()
-                            val eventId = responseBody.toIntOrNull()
-                            Log.d("UploadFragment", "Created calendar event: $eventTitle on ${Date(date)} with ID: $eventId")
-                            successCount++
-                        } else {
-                            Log.e("UploadFragment", "Failed to create calendar event: $eventTitle. Status: ${response.status}")
-                            failureCount++
-                        }
+                        val event = CalendarEvent(
+                            userId = userId,
+                            contractId = id,
+                            title = eventTitle,
+                            date = date
+                        )
+                        calendarEventDao.create(event)
+                        Log.d("UploadFragment", "Created calendar event: $eventTitle on ${Date(date)}")
+                        successCount++
                     } catch (e: Exception) {
                         Log.e("UploadFragment", "Error creating calendar event: ${e.message}", e)
                         failureCount++
@@ -278,7 +267,6 @@ class UploadFragment : Fragment() {
             showToast(message)
         }
     }
-
 
     private fun extractImportantDates(summary: String): List<Pair<Long, String>> {
         val importantDates = mutableListOf<Pair<Long, String>>()
@@ -424,6 +412,8 @@ class UploadFragment : Fragment() {
             return "Error: ${e.message}"
         }
     }
+
+
 
     companion object {
         private const val FILE_PICKER_REQUEST_CODE = 1

@@ -92,7 +92,6 @@
                 android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Login Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonLogin"
             android:layout_width="match_parent"
@@ -117,6 +116,7 @@
             android:fontFamily="@font/sans_serif_light"/>
 
         <!-- Sign Up Link -->
+
         <TextView
             android:id="@+id/textViewSignUp"
             android:layout_width="wrap_content"
