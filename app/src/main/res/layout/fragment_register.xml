@@ -1,87 +1,143 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:gravity="center">
+        android:padding="24dp"
+        android:gravity="center"
+        android:background="@color/white">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Registration"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
+        <!-- Header Section with Icon -->
 
+        <LinearLayout
+            android:layout_width="348dp"
+            android:layout_height="228dp"
+            android:layout_marginBottom="32dp"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <!-- Decorative Icon -->
+            <ImageView
+                android:layout_width="182dp"
+                android:layout_height="123dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/cc_logo" />
+
+            <!-- Updated Headline -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/sans_serif_medium"
+                android:text="Join Us Today!"
+                android:textColor="@color/navy_blue"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <!-- Subheading -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/sans_serif_light"
+                android:text="Create your account"
+                android:textColor="@color/navy_blue"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- Input Fields -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_marginBottom="18dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/light_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextFullName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Full Name"
-                android:inputType="textPersonName"/>
+                android:inputType="textPersonName"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_marginBottom="18dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/light_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextEmail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Email"
-                android:inputType="textEmailAddress"/>
+                android:inputType="textEmailAddress"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:passwordToggleEnabled="true">
+            android:layout_marginBottom="18dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            app:passwordToggleEnabled="true"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/light_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Password"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:layout_marginBottom="32dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            app:boxBackgroundMode="outline"
+            app:boxStrokeColor="@color/light_blue">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextIndustry"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Industry"/>
+                android:hint="Industry"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:fontFamily="@font/sans_serif_light"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Register Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/buttonRegister"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Register"
-            android:padding="12dp"/>
-
+            android:padding="16dp"
+            android:textSize="18sp"
+            android:fontFamily="@font/sans_serif_medium"
+            android:textColor="@color/navy_blue"
+            android:backgroundTint="@color/light_blue"
+            app:cornerRadius="8dp"/>
     </LinearLayout>
 </ScrollView>
