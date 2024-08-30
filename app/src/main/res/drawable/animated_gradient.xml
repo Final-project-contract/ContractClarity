@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="@color/light_blue"
+                android:endColor="@color/navy_blue"
+                android:angle="45"/>
+        </shape>
+    </item>
+
+    <!-- Overlay with a slow transition animation -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="@color/navy_blue"
+                android:endColor="@color/light_blue"
+                android:angle="45"/>
+            <corners android:radius="0dp"/>
+        </shape>
+        <animation-list
+            android:oneshot="false">
+            <item
+                android:drawable="@drawable/gradient_start"
+                android:duration="3000"/>
+            <item
+                android:drawable="@drawable/gradient_end"
+                android:duration="3000"/>
+        </animation-list>
+    </item>
+</layer-list>

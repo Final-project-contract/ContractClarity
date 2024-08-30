@@ -2,4 +2,6 @@
     <string name="app_name">Final_Project</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="previous_month">Previous Month</string>
+    <string name="next_month">Next Month</string>
 </resources>

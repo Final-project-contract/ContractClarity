@@ -1,0 +1,12 @@
+<resources>
+    <!-- Other existing styles -->
+
+    <!-- Bottom Navigation View Style -->
+    <style name="BottomNavigationViewStyle" parent="Widget.Design.BottomNavigationView">
+        <item name="android:background">@drawable/gradient_start</item> <!-- Background with gradient -->
+        <item name="itemIconSize">24dp</item> <!-- Adjust icon size -->
+        <item name="itemIconTint">@color/nav_menu_icon_color_selector</item> <!-- Icon color selector -->
+        <item name="itemTextColor">@color/nav_menu_text_color_selector</item> <!-- Text color selector -->
+        <item name="elevation">8dp</item> <!-- Shadow effect -->
+    </style>
+</resources>
