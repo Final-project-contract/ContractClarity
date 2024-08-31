@@ -18,7 +18,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
-import com.example.server.CalendarEvent
 import com.example.server.CalendarEventDao
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
@@ -38,10 +37,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -65,7 +63,7 @@ class UploadFragment : Fragment() {
 
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
-            json(json)
+            json()
         }
     }
 
@@ -241,21 +239,28 @@ class UploadFragment : Fragment() {
 
             for ((date, eventTitle) in importantDates) {
                 Log.d("UploadFragment", "Attempting to create calendar event: $eventTitle on ${Date(date)}")
-                withContext(Dispatchers.IO) {
-                    try {
-                        val event = CalendarEvent(
-                            userId = userId,
-                            contractId = id,
-                            title = eventTitle,
-                            date = date
-                        )
-                        calendarEventDao.create(event)
+                try {
+                    val token = tokenManager.getToken() ?: throw Exception("No token found")
+                    val jsonBody = JSONObject().apply {
+                        put("contractId", id)
+                        put("title", eventTitle)
+                        put("date", date)
+                    }
+                    val response: HttpResponse = client.post("http://10.0.2.2:8080/calendar-events") {
+                        header("Authorization", "Bearer $token")
+                        contentType(ContentType.Application.Json)
+                        setBody(jsonBody.toString())
+                    }
+                    if (response.status.isSuccess()) {
                         Log.d("UploadFragment", "Created calendar event: $eventTitle on ${Date(date)}")
                         successCount++
-                    } catch (e: Exception) {
-                        Log.e("UploadFragment", "Error creating calendar event: ${e.message}", e)
+                    } else {
+                        Log.e("UploadFragment", "Failed to create calendar event: ${response.status}")
                         failureCount++
                     }
+                } catch (e: Exception) {
+                    Log.e("UploadFragment", "Error creating calendar event: ${e.message}", e)
+                    failureCount++
                 }
             }
 
