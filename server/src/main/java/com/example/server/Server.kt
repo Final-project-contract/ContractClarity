@@ -2,13 +2,20 @@ package com.example.server
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.ktor.client.HttpClient
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentDisposition
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.http.content.streamProvider
+import io.ktor.http.contentType
 import io.ktor.serialization.gson.gson
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
@@ -20,6 +27,7 @@ import io.ktor.server.auth.jwt.jwt
 import io.ktor.server.auth.principal
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
@@ -33,6 +41,7 @@ import io.ktor.server.routing.routing
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.json.JSONObject
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.time.Instant
@@ -49,6 +58,7 @@ object Server {
     private val contractDao = ContractDao()
     private val contractSummaryDao = ContractSummaryDao()
     private val calendarEventDao = CalendarEventDao()
+    private val anthropicApiKey = System.getenv("ANTHROPIC_API_KEY") ?: "your_default_api_key"
 
     fun start() {
         org.apache.log4j.BasicConfigurator.configure()
@@ -291,7 +301,6 @@ object Server {
                     }
                 }
 
-
                 post("/calendar-events") {
                     try {
                         val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
@@ -316,6 +325,7 @@ object Server {
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while creating the calendar event")
                     }
                 }
+
                 get("/calendar-events") {
                     try {
                         val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
@@ -330,7 +340,64 @@ object Server {
                         call.respond(HttpStatusCode.InternalServerError, "An error occurred while fetching calendar events")
                     }
                 }
+
+                post("/ask-question") {
+                    try {
+                        val userId = call.principal<JWTPrincipal>()?.payload?.getClaim("userId")?.asInt()
+                        if (userId == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "Invalid token")
+                            return@post
+                        }
+
+                        val requestBody = call.receive<Map<String, Any>>()
+                        val question = requestBody["question"] as? String ?: ""
+                        val contractId = (requestBody["contractId"] as? Number)?.toInt()
+                            ?: throw IllegalArgumentException("Invalid contractId")
+
+                        // Fetch the contract summary
+                        val summary = contractSummaryDao.findByContractId(contractId)?.summaryText
+                            ?: throw NotFoundException("Summary not found for contract $contractId")
+
+                        val answer = askAnthropicAPI(question, summary)
+                        call.respond(mapOf("answer" to answer))
+                    } catch (e: Exception) {
+                        when (e) {
+                            is IllegalArgumentException -> call.respond(HttpStatusCode.BadRequest, e.message ?: "Bad request")
+                            is NotFoundException -> call.respond(HttpStatusCode.NotFound, e.message ?: "Not found")
+                            else -> {
+                                logger.error("Error asking question: ${e.message}")
+                                call.respond(HttpStatusCode.InternalServerError, "An error occurred while asking the question")
+                            }
+                        }
+                    }
+                }
             }
+        }
+    }
+
+    private suspend fun askAnthropicAPI(question: String, summary: String): String {
+        val client = HttpClient()
+        try {
+            val response = client.post("https://api.anthropic.com/v1/messages") {
+                header("x-api-key", anthropicApiKey)
+                contentType(ContentType.Application.Json)
+                setBody(mapOf(
+                    "model" to "claude-3-5-sonnet-20240320",
+                    "max_tokens" to 1000,
+                    "messages" to listOf(
+                        mapOf(
+                            "role" to "user",
+                            "content" to "Here's a summary of a contract: $summary\n\nNow, please answer this question about the contract: $question"
+                        )
+                    )
+                ))
+            }
+
+            val responseBody = response.bodyAsText()
+            val jsonResponse = JSONObject(responseBody)
+            return jsonResponse.getJSONArray("content").getJSONObject(0).getString("text")
+        } finally {
+            client.close()
         }
     }
 
@@ -392,6 +459,7 @@ object Server {
             .sign(Algorithm.HMAC256(secret))
     }
 }
+
 data class CalendarEventData(
     val contractId: Int,
     val title: String,

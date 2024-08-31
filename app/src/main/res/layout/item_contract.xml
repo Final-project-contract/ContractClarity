@@ -41,32 +41,41 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:gravity="end"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@id/contractNameTextView">
 
             <Button
                 android:id="@+id/openContractButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
                 android:backgroundTint="@color/navy_blue"
                 android:textColor="@color/white"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="10dp"
                 android:background="@drawable/rounded_button"
-                android:text="Open Contract" />
+                android:text="Open" />
 
             <Button
                 android:id="@+id/openSummaryButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginHorizontal="4dp"
                 android:backgroundTint="@color/navy_blue"
                 android:textColor="@color/white"
-                android:paddingHorizontal="18dp"
-                android:paddingVertical="10dp"
                 android:background="@drawable/rounded_button"
-                android:text="Open Summary" />
+                android:text="Summary" />
+
+            <Button
+                android:id="@+id/askQuestionButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@color/navy_blue"
+                android:textColor="@color/white"
+                android:background="@drawable/rounded_button"
+                android:text="Ask" />
 
         </LinearLayout>
 

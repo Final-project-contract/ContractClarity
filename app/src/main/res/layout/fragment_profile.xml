@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.app.ProfileFragment"
-    >
+    tools:context="com.example.app.ProfileFragment">
 
     <!-- Profile Header with Logo and Username Box -->
     <ImageView
@@ -51,15 +50,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/usernameTextView" />
 
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/contractsRecyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="16dp"
+        android:layout_marginTop="588dp"
         android:background="@drawable/gradient_start"
-        app:layout_constraintTop_toBottomOf="@id/contractsLabelTextView"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/contractsLabelTextView" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
