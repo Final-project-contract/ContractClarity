@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Final_Project" parent="Theme.MaterialComponents.Light.NoActionBar">
-
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryDark">@color/purple_700</item>
         <item name="colorAccent">@color/teal_200</item>
+        <!-- Set status bar color -->
+        <item name="android:statusBarColor">@color/navy_blue</item> <!-- Replace with your color -->
     </style>
-
 
     <style name="CalendarDateTextAppearance" parent="android:TextAppearance.DeviceDefault.Small">
         <item name="android:background">@drawable/calendar_date_selector</item>

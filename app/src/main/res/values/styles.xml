@@ -1,5 +1,4 @@
 <resources>
-    <!-- Other existing styles -->
 
     <!-- Bottom Navigation View Style -->
     <style name="BottomNavigationViewStyle" parent="Widget.Design.BottomNavigationView">

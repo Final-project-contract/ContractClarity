@@ -15,10 +15,10 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
-import com.example.server.CalendarEvent
 import com.example.server.CalendarEventDao
 import com.itextpdf.text.pdf.PdfReader
 import com.itextpdf.text.pdf.parser.PdfTextExtractor
@@ -38,14 +38,21 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import org.json.JSONObject
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.graphics.Typeface
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
+import android.text.style.TypefaceSpan
 
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
@@ -65,7 +72,7 @@ class UploadFragment : Fragment() {
 
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
-            json(json)
+            json()
         }
     }
 
@@ -195,20 +202,50 @@ class UploadFragment : Fragment() {
         }
     }
 
+    private fun formatSummaryText(summary: String): SpannableString {
+        val spannableString = SpannableString(summary)
+
+        // Define the color for IMPORTANT DATES
+        val importantDatesColor = ContextCompat.getColor(requireContext(), R.color.navy_blue)
+
+        // Define the font style for numbers
+        val numberFont = "serif"  // You can use a different font if needed
+
+        // Find the start index of IMPORTANT DATES
+        val importantDatesStart = summary.indexOf("IMPORTANT DATES:")
+        if (importantDatesStart != -1) {
+            // Style "IMPORTANT DATES" with bold and underline
+            spannableString.setSpan(StyleSpan(Typeface.BOLD), importantDatesStart, importantDatesStart + "IMPORTANT DATES:".length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannableString.setSpan(UnderlineSpan(), importantDatesStart, importantDatesStart + "IMPORTANT DATES:".length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            spannableString.setSpan(ForegroundColorSpan(importantDatesColor), importantDatesStart, importantDatesStart + "IMPORTANT DATES:".length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+        // Change font style for numbers
+        val numberPattern = "\\d+".toRegex()
+        val matcher = numberPattern.findAll(summary)
+        for (match in matcher) {
+            val start = match.range.first
+            val end = match.range.last + 1
+            spannableString.setSpan(TypefaceSpan(numberFont), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+        return spannableString
+    }
+
     private fun summarizePdf(pdfUri: Uri, context: Context) {
         lifecycleScope.launch {
             try {
                 val inputStream = uriToInputStream(context, pdfUri)
                 val pdfText: String = extractData(inputStream)
-                Log.d("UploadFragment", "Extracted Text: $pdfText")
                 val request = createMessageRequest(pdfText)
                 val response = api.createMessage(request)
                 val summary = response.content.firstOrNull()?.text ?: "No summary available"
 
-                Log.d("UploadFragment", "Summary: $summary")
+                // Format the summary to highlight IMPORTANT DATES
+                val formattedSummary = formatSummaryText(summary)
 
                 activity?.runOnUiThread {
-                    summaryTextView.text = summary
+                    summaryTextView.text = formattedSummary
                     showLoading(false)
                     summaryTextView.visibility = View.VISIBLE
                 }
@@ -222,6 +259,7 @@ class UploadFragment : Fragment() {
             }
         }
     }
+
 
     private suspend fun createCalendarEventsFromSummary(summary: String, contractId: Int?) {
         Log.d("UploadFragment", "Creating calendar events from summary")
@@ -241,21 +279,28 @@ class UploadFragment : Fragment() {
 
             for ((date, eventTitle) in importantDates) {
                 Log.d("UploadFragment", "Attempting to create calendar event: $eventTitle on ${Date(date)}")
-                withContext(Dispatchers.IO) {
-                    try {
-                        val event = CalendarEvent(
-                            userId = userId,
-                            contractId = id,
-                            title = eventTitle,
-                            date = date
-                        )
-                        calendarEventDao.create(event)
+                try {
+                    val token = tokenManager.getToken() ?: throw Exception("No token found")
+                    val jsonBody = JSONObject().apply {
+                        put("contractId", id)
+                        put("title", eventTitle)
+                        put("date", date)
+                    }
+                    val response: HttpResponse = client.post("http://10.0.2.2:8080/calendar-events") {
+                        header("Authorization", "Bearer $token")
+                        contentType(ContentType.Application.Json)
+                        setBody(jsonBody.toString())
+                    }
+                    if (response.status.isSuccess()) {
                         Log.d("UploadFragment", "Created calendar event: $eventTitle on ${Date(date)}")
                         successCount++
-                    } catch (e: Exception) {
-                        Log.e("UploadFragment", "Error creating calendar event: ${e.message}", e)
+                    } else {
+                        Log.e("UploadFragment", "Failed to create calendar event: ${response.status}")
                         failureCount++
                     }
+                } catch (e: Exception) {
+                    Log.e("UploadFragment", "Error creating calendar event: ${e.message}", e)
+                    failureCount++
                 }
             }
 
@@ -296,17 +341,17 @@ class UploadFragment : Fragment() {
 
     private fun parseDate(dateString: String): Long? {
         val formatters = listOf(
-            SimpleDateFormat("d-M-yyyy", Locale.US),
             SimpleDateFormat("M-d-yyyy", Locale.US),
-            SimpleDateFormat("MM/dd/yyyy", Locale.US),
+            SimpleDateFormat("MM-dd-yyyy", Locale.US),
             SimpleDateFormat("yyyy-MM-dd", Locale.US)
         )
 
         for (formatter in formatters) {
             try {
+                formatter.timeZone = TimeZone.getTimeZone("UTC")  // Ensure UTC timezone
                 val date = formatter.parse(dateString)
                 if (date != null) {
-                    Log.d("UploadFragment", "Successfully parsed date: $dateString")
+                    Log.d("UploadFragment", "Successfully parsed date: $dateString to ${date.time}")
                     return date.time
                 }
             } catch (e: Exception) {
@@ -412,8 +457,6 @@ class UploadFragment : Fragment() {
             return "Error: ${e.message}"
         }
     }
-
-
 
     companion object {
         private const val FILE_PICKER_REQUEST_CODE = 1

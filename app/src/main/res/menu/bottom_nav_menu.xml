@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/profileFragment"
@@ -12,4 +11,8 @@
         android:id="@+id/calendarFragment"
         android:icon="@drawable/baseline_calendar_month_24"
         android:title="Calendar" />
+    <item
+        android:id="@+id/action_logout"
+        android:icon="@drawable/baseline_exit_to_app_24"
+        android:title="Logout" />
 </menu>

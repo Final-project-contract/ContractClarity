@@ -4,4 +4,5 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="previous_month">Previous Month</string>
     <string name="next_month">Next Month</string>
+    <string name="bot_icon_description">bot</string>
 </resources>
