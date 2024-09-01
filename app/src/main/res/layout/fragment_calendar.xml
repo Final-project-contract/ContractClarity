@@ -15,25 +15,6 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/baseline_arrow_back_24"
-            android:contentDescription="@string/previous_month"
-            android:background="?attr/selectableItemBackground"
-            android:padding="8dp" />
-
-        <TextView
-            android:id="@+id/calendarTitleTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Month Year"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_gravity="center"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:textColor="@color/navy_blue" />
 
         <ImageButton
             android:layout_width="wrap_content"
