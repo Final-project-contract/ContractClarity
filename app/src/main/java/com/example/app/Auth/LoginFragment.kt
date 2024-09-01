@@ -50,7 +50,10 @@ class LoginFragment : Fragment() {
     private fun loginUser() {
         val email = editTextEmail.text.toString().trim()
         val password = editTextPassword.text.toString().trim()
+        loginWithCredentials(email, password)
+    }
 
+    fun loginWithCredentials(email: String, password: String) {
         if (email.isNotEmpty() && password.isNotEmpty()) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
@@ -59,13 +62,15 @@ class LoginFragment : Fragment() {
                         contentType(ContentType.Application.Json)
                         setBody("""{"email":"$email","password":"$password"}""")
                     }
+
                     if (response.status.isSuccess()) {
                         val jsonBody = JSONObject(response.bodyAsText())
                         val token = jsonBody.getString("token")
                         tokenManager.saveToken(token)
+
                         withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                            findNavController().navigate(R.id.action_loginFragment_to_profileFragment)
+                            navigateToProfileFragment()
                         }
                     } else {
                         withContext(Dispatchers.Main) {
@@ -82,5 +87,9 @@ class LoginFragment : Fragment() {
         } else {
             Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun navigateToProfileFragment() {
+        findNavController().navigate(R.id.action_loginFragment_to_profileFragment)
     }
 }

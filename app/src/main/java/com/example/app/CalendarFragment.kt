@@ -54,6 +54,11 @@ class CalendarFragment : Fragment() {
         return view
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadCalendarEvents()
+    }
+
     private fun setupCalendarView() {
         customCalendarView.setOnDateChangeListener { year, month, dayOfMonth ->
             calendar.set(year, month, dayOfMonth)
@@ -98,6 +103,7 @@ class CalendarFragment : Fragment() {
                     val responseBody = response.bodyAsText()
                     events.clear()
                     events.addAll(parseCalendarEvents(responseBody))
+                    Log.d("CalendarFragment", "Loaded ${events.size} events")
                     showEventsForDay(getEventsForSelectedDate())
                 } else {
                     throw Exception("Failed to fetch events: ${response.status}")
@@ -124,15 +130,24 @@ class CalendarFragment : Fragment() {
     }
 
     private fun getEventsForSelectedDate(): List<CalendarEvent> {
-        return events.filter {
-            val eventCalendar = Calendar.getInstance().apply { timeInMillis = it.date }
-            eventCalendar.get(Calendar.YEAR) == calendar.get(Calendar.YEAR) &&
-                    eventCalendar.get(Calendar.MONTH) == calendar.get(Calendar.MONTH) &&
-                    eventCalendar.get(Calendar.DAY_OF_MONTH) == calendar.get(Calendar.DAY_OF_MONTH)
+        val startOfDay = calendar.clone() as Calendar
+        startOfDay.set(Calendar.HOUR_OF_DAY, 0)
+        startOfDay.set(Calendar.MINUTE, 0)
+        startOfDay.set(Calendar.SECOND, 0)
+        startOfDay.set(Calendar.MILLISECOND, 0)
+
+        val endOfDay = startOfDay.clone() as Calendar
+        endOfDay.add(Calendar.DAY_OF_MONTH, 1)
+
+        val filteredEvents = events.filter {
+            it.date >= startOfDay.timeInMillis && it.date < endOfDay.timeInMillis
         }
+        Log.d("CalendarFragment", "Filtered ${filteredEvents.size} events for selected date")
+        return filteredEvents
     }
 
     private fun showEventsForDay(events: List<CalendarEvent>) {
+        Log.d("CalendarFragment", "Showing ${events.size} events for selected date")
         if (events.isEmpty()) {
             eventsTextView.text = "No events for this day"
             return

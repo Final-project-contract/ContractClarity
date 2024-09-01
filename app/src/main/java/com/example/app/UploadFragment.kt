@@ -44,6 +44,7 @@ import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
@@ -301,17 +302,17 @@ class UploadFragment : Fragment() {
 
     private fun parseDate(dateString: String): Long? {
         val formatters = listOf(
-            SimpleDateFormat("d-M-yyyy", Locale.US),
             SimpleDateFormat("M-d-yyyy", Locale.US),
-            SimpleDateFormat("MM/dd/yyyy", Locale.US),
+            SimpleDateFormat("MM-dd-yyyy", Locale.US),
             SimpleDateFormat("yyyy-MM-dd", Locale.US)
         )
 
         for (formatter in formatters) {
             try {
+                formatter.timeZone = TimeZone.getTimeZone("UTC")  // Ensure UTC timezone
                 val date = formatter.parse(dateString)
                 if (date != null) {
-                    Log.d("UploadFragment", "Successfully parsed date: $dateString")
+                    Log.d("UploadFragment", "Successfully parsed date: $dateString to ${date.time}")
                     return date.time
                 }
             } catch (e: Exception) {
@@ -417,8 +418,6 @@ class UploadFragment : Fragment() {
             return "Error: ${e.message}"
         }
     }
-
-
 
     companion object {
         private const val FILE_PICKER_REQUEST_CODE = 1
