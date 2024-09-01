@@ -40,11 +40,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+
 class ProfileFragment : Fragment() {
     private var usernameTextView: TextView? = null
     private var contractsRecyclerView: RecyclerView? = null
     private lateinit var tokenManager: TokenManager
     private var loadingProgressBar: ProgressBar? = null
+    private var logoutButton: Button? = null
 
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
@@ -68,11 +70,21 @@ class ProfileFragment : Fragment() {
         usernameTextView = view.findViewById(R.id.usernameTextView)
         contractsRecyclerView = view.findViewById(R.id.contractsRecyclerView)
         loadingProgressBar = view.findViewById(R.id.loadingProgressBar)
+        logoutButton = view.findViewById(R.id.logoutButton)
+
         tokenManager = TokenManager(requireContext())
 
         contractsRecyclerView?.layoutManager = LinearLayoutManager(context)
 
         loadUserProfile()
+
+        logoutButton?.setOnClickListener {
+            logout()
+        }
+    }
+
+    private fun logout() {
+        (activity as? MainAppActivity)?.handleLogout()
     }
 
     private fun loadUserProfile() {
@@ -134,7 +146,6 @@ class ProfileFragment : Fragment() {
             }
         }
     }
-
 
     private fun openContract(contract: Contract) {
         viewLifecycleOwner.lifecycleScope.launch {
