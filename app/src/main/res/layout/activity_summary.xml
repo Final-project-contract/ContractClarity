@@ -23,37 +23,61 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Summary Text Container -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/summaryCardView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="16dp"
-        app:cardBackgroundColor="@color/light_blue"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="8dp"
-        app:layout_constraintTop_toBottomOf="@id/contractName"
-        app:layout_constraintBottom_toTopOf="@id/backButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.5">
+    <!-- Summary Title -->
 
-        <TextView
-            android:id="@+id/summaryTextView"
+    <!-- Scrollable Summary Text Container -->
+
+    <TextView
+        android:id="@+id/summaryTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Summary"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="15dp"
+        android:textColor="@color/navy_blue"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="400dp"
+        android:layout_height="618dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@id/backButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/summaryTitle">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/summaryCardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:textColor="@color/navy_blue"
-            android:textSize="17dp"
-            android:text="Summary will be shown here"
-            android:lineSpacingExtra="4dp" />
-    </androidx.cardview.widget.CardView>
+            android:layout_margin="16dp"
+            app:cardBackgroundColor="@color/light_blue"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="8dp">
+
+            <TextView
+                android:id="@+id/summaryTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="4dp"
+                android:padding="16dp"
+                android:text="Summary will be shown here"
+                android:textColor="@color/navy_blue"
+                android:textSize="17dp" />
+        </androidx.cardview.widget.CardView>
+
+    </ScrollView>
 
     <!-- Back Button -->
     <ImageButton
         android:id="@+id/backButton"
         android:layout_width="75dp"
-        android:layout_height="56dp"
+        android:layout_height="50dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:scaleType="centerInside"
         android:src="@drawable/baseline_arrow_back_24"
@@ -63,6 +87,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
 
     <!--<?xml version="1.0" encoding="utf-8"?>-->
 <!--<androidx.constraintlayout.widget.ConstraintLayout-->
@@ -75,13 +100,85 @@
 <!--    android:padding="16dp"-->
 <!--    tools:context="com.example.app.SummaryActivity">-->
 
-<!--    &lt;!&ndash; File Name Header &ndash;&gt;-->
+<!--    &lt;!&ndash; Contract Name Header &ndash;&gt;-->
 <!--    <TextView-->
-<!--        android:id="@+id/filename"-->
+<!--        android:id="@+id/contractName"-->
 <!--        android:layout_width="wrap_content"-->
 <!--        android:layout_height="wrap_content"-->
 <!--        android:layout_marginBottom="16dp"-->
-<!--        android:text="File Name"-->
+<!--        android:textSize="24sp"-->
+<!--        android:textStyle="bold"-->
+<!--        android:textColor="@color/navy_blue"-->
+<!--        android:gravity="center"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent" />-->
+
+<!--    &lt;!&ndash; Scrollable Summary Text Container &ndash;&gt;-->
+<!--    <ScrollView-->
+<!--        android:layout_width="400dp"-->
+<!--        android:layout_height="618dp"-->
+<!--        android:fillViewport="true"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/backButton"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/contractName">-->
+
+<!--        <androidx.cardview.widget.CardView-->
+<!--            android:id="@+id/summaryCardView"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_margin="16dp"-->
+<!--            app:cardBackgroundColor="@color/light_blue"-->
+<!--            app:cardCornerRadius="12dp"-->
+<!--            app:cardElevation="8dp">-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/summaryTextView"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:lineSpacingExtra="4dp"-->
+<!--                android:padding="16dp"-->
+<!--                android:text="Summary will be shown here"-->
+<!--                android:textColor="@color/navy_blue"-->
+<!--                android:textSize="17dp" />-->
+<!--        </androidx.cardview.widget.CardView>-->
+
+<!--    </ScrollView>-->
+
+<!--    &lt;!&ndash; Back Button &ndash;&gt;-->
+<!--    <ImageButton-->
+<!--        android:id="@+id/backButton"-->
+<!--        android:layout_width="75dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--        android:scaleType="centerInside"-->
+<!--        android:src="@drawable/baseline_arrow_back_24"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.0"-->
+<!--        app:layout_constraintStart_toStartOf="parent" />-->
+
+<!--</androidx.constraintlayout.widget.ConstraintLayout>-->
+
+
+    <!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<androidx.constraintlayout.widget.ConstraintLayout-->
+<!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="match_parent"-->
+<!--    android:background="@color/white"-->
+<!--    android:padding="16dp"-->
+<!--    tools:context="com.example.app.SummaryActivity">-->
+
+<!--    &lt;!&ndash; Contract Name Header &ndash;&gt;-->
+<!--    <TextView-->
+<!--        android:id="@+id/contractName"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginBottom="16dp"-->
 <!--        android:textSize="24sp"-->
 <!--        android:textStyle="bold"-->
 <!--        android:textColor="@color/navy_blue"-->
@@ -91,6 +188,8 @@
 <!--        app:layout_constraintEnd_toEndOf="parent" />-->
 
 <!--    &lt;!&ndash; Summary Text Container &ndash;&gt;-->
+
+<!--    &lt;!&ndash; Back Button &ndash;&gt;-->
 <!--    <androidx.cardview.widget.CardView-->
 <!--        android:id="@+id/summaryCardView"-->
 <!--        android:layout_width="0dp"-->
@@ -99,24 +198,23 @@
 <!--        app:cardBackgroundColor="@color/light_blue"-->
 <!--        app:cardCornerRadius="12dp"-->
 <!--        app:cardElevation="8dp"-->
-<!--        app:layout_constraintTop_toBottomOf="@id/filename"-->
 <!--        app:layout_constraintBottom_toTopOf="@id/backButton"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
 <!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintVertical_bias="0.5">-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/contractName"-->
+<!--        app:layout_constraintVertical_bias="0.468">-->
 
 <!--        <TextView-->
 <!--            android:id="@+id/summaryTextView"-->
 <!--            android:layout_width="match_parent"-->
 <!--            android:layout_height="wrap_content"-->
+<!--            android:lineSpacingExtra="4dp"-->
 <!--            android:padding="16dp"-->
-<!--            android:textColor="@color/navy_blue"-->
-<!--            android:textSize="17dp"-->
 <!--            android:text="Summary will be shown here"-->
-<!--            android:lineSpacingExtra="4dp" />-->
+<!--            android:textColor="@color/navy_blue"-->
+<!--            android:textSize="17dp" />-->
 <!--    </androidx.cardview.widget.CardView>-->
 
-<!--    &lt;!&ndash; Back Button &ndash;&gt;-->
 <!--    <ImageButton-->
 <!--        android:id="@+id/backButton"-->
 <!--        android:layout_width="75dp"-->
@@ -130,3 +228,70 @@
 <!--        app:layout_constraintStart_toStartOf="parent" />-->
 
 <!--</androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--    &lt;!&ndash;<?xml version="1.0" encoding="utf-8"?>&ndash;&gt;-->
+<!--&lt;!&ndash;<androidx.constraintlayout.widget.ConstraintLayout&ndash;&gt;-->
+<!--&lt;!&ndash;    xmlns:android="http://schemas.android.com/apk/res/android"&ndash;&gt;-->
+<!--&lt;!&ndash;    xmlns:app="http://schemas.android.com/apk/res-auto"&ndash;&gt;-->
+<!--&lt;!&ndash;    xmlns:tools="http://schemas.android.com/tools"&ndash;&gt;-->
+<!--&lt;!&ndash;    android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;    android:layout_height="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;    android:background="@color/white"&ndash;&gt;-->
+<!--&lt;!&ndash;    android:padding="16dp"&ndash;&gt;-->
+<!--&lt;!&ndash;    tools:context="com.example.app.SummaryActivity">&ndash;&gt;-->
+
+<!--&lt;!&ndash;    &lt;!&ndash; File Name Header &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;    <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;        android:id="@+id/filename"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_width="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_marginBottom="16dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:text="File Name"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:textSize="24sp"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:textStyle="bold"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:textColor="@color/navy_blue"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:gravity="center"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintTop_toTopOf="parent"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintStart_toStartOf="parent"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintEnd_toEndOf="parent" />&ndash;&gt;-->
+
+<!--&lt;!&ndash;    &lt;!&ndash; Summary Text Container &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;    <androidx.cardview.widget.CardView&ndash;&gt;-->
+<!--&lt;!&ndash;        android:id="@+id/summaryCardView"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_width="0dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_height="0dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_margin="16dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:cardBackgroundColor="@color/light_blue"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:cardCornerRadius="12dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:cardElevation="8dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintTop_toBottomOf="@id/filename"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintBottom_toTopOf="@id/backButton"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintStart_toStartOf="parent"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintVertical_bias="0.5">&ndash;&gt;-->
+
+<!--&lt;!&ndash;        <TextView&ndash;&gt;-->
+<!--&lt;!&ndash;            android:id="@+id/summaryTextView"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_width="match_parent"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:layout_height="wrap_content"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:padding="16dp"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:textColor="@color/navy_blue"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:textSize="17dp"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:text="Summary will be shown here"&ndash;&gt;-->
+<!--&lt;!&ndash;            android:lineSpacingExtra="4dp" />&ndash;&gt;-->
+<!--&lt;!&ndash;    </androidx.cardview.widget.CardView>&ndash;&gt;-->
+
+<!--&lt;!&ndash;    &lt;!&ndash; Back Button &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;    <ImageButton&ndash;&gt;-->
+<!--&lt;!&ndash;        android:id="@+id/backButton"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_width="75dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:layout_height="56dp"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:background="?attr/selectableItemBackgroundBorderless"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:scaleType="centerInside"&ndash;&gt;-->
+<!--&lt;!&ndash;        android:src="@drawable/baseline_arrow_back_24"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintBottom_toBottomOf="parent"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintEnd_toEndOf="parent"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintHorizontal_bias="0.0"&ndash;&gt;-->
+<!--&lt;!&ndash;        app:layout_constraintStart_toStartOf="parent" />&ndash;&gt;-->
+
+<!--&lt;!&ndash;</androidx.constraintlayout.widget.ConstraintLayout>&ndash;&gt;-->
