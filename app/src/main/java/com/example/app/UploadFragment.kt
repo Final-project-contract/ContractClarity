@@ -46,10 +46,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+<<<<<<< HEAD
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 
+=======
+>>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
 
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
@@ -461,6 +464,7 @@ class UploadFragment : Fragment() {
             "Error: ${e.message}"
         }
     }
+<<<<<<< HEAD
 //    private fun extractData(inputStream: InputStream?): String {
 //        try {
 //            var extractedText = ""
@@ -476,6 +480,8 @@ class UploadFragment : Fragment() {
 //            return "Error: ${e.message}"
 //        }
 //    }
+=======
+>>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
 
     companion object {
         private const val FILE_PICKER_REQUEST_CODE = 1

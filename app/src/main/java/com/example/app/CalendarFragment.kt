@@ -91,58 +91,34 @@ class CalendarFragment : Fragment() {
         datePickerDialog.show()
     }
 
-//    private fun loadCalendarEvents() {
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            try {
-//                val token = tokenManager.getToken() ?: throw Exception("No token found")
-//                val response = client.get("http://10.0.2.2:8080/calendar-events") {
-//                    header("Authorization", "Bearer $token")
-//                }
-//
-//                if (response.status.isSuccess()) {
-//                    val responseBody = response.bodyAsText()
-//                    events.clear()
-//                    events.addAll(parseCalendarEvents(responseBody))
-//                    Log.d("CalendarFragment", "Loaded ${events.size} events")
-//                    showEventsForDay(getEventsForSelectedDate())
-//                } else {
-//                    throw Exception("Failed to fetch events: ${response.status}")
-//                }
-//            } catch (e: Exception) {
-//                Log.e("CalendarFragment", "Error loading calendar events: ${e.message}")
-//                showToast("Failed to load calendar events: ${e.message}")
-//            }
-//        }
-//    }
-private fun loadCalendarEvents() {
-    viewLifecycleOwner.lifecycleScope.launch {
-        try {
-            val token = tokenManager.getToken() ?: throw Exception("No token found")
-            val response = client.get("http://10.0.2.2:8080/calendar-events") {
-                header("Authorization", "Bearer $token")
+    private fun loadCalendarEvents() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val token = tokenManager.getToken() ?: throw Exception("No token found")
+                val response = client.get("http://10.0.2.2:8080/calendar-events") {
+                    header("Authorization", "Bearer $token")
+                }
+
+                if (response.status.isSuccess()) {
+                    val responseBody = response.bodyAsText()
+                    events.clear()
+                    events.addAll(parseCalendarEvents(responseBody))
+                    Log.d("CalendarFragment", "Loaded ${events.size} events")
+
+                    // Extract important dates and update the calendar view
+                    val importantDates = events.map { it.date }.toSet()
+                    customCalendarView.setImportantDates(importantDates)
+
+                    showEventsForDay(getEventsForSelectedDate())
+                } else {
+                    throw Exception("Failed to fetch events: ${response.status}")
+                }
+            } catch (e: Exception) {
+                Log.e("CalendarFragment", "Error loading calendar events: ${e.message}")
+                showToast("Failed to load calendar events: ${e.message}")
             }
-
-            if (response.status.isSuccess()) {
-                val responseBody = response.bodyAsText()
-                events.clear()
-                events.addAll(parseCalendarEvents(responseBody))
-                Log.d("CalendarFragment", "Loaded ${events.size} events")
-
-                // Extract important dates and update the calendar view
-                val importantDates = events.map { it.date }.toSet()
-                customCalendarView.setImportantDates(importantDates)
-
-                showEventsForDay(getEventsForSelectedDate())
-            } else {
-                throw Exception("Failed to fetch events: ${response.status}")
-            }
-        } catch (e: Exception) {
-            Log.e("CalendarFragment", "Error loading calendar events: ${e.message}")
-            showToast("Failed to load calendar events: ${e.message}")
         }
     }
-}
-
 
     private fun parseCalendarEvents(responseBody: String): List<CalendarEvent> {
         val jsonArray = Json.parseToJsonElement(responseBody).jsonArray

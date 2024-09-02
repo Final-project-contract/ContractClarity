@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<<<<<<< HEAD
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -26,11 +27,27 @@
         app:layout_constraintEnd_toStartOf="@+id/sendQuestionButton"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
+=======
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/questionEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter your question"
+        android:inputType="textMultiLine"
+        android:minLines="3" />
+>>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
 
     <Button
         android:id="@+id/sendQuestionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+<<<<<<< HEAD
         android:backgroundTint="@color/navy_blue"
         android:text="Send"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -99,3 +116,10 @@
 <!--    </LinearLayout>-->
 
 <!--</LinearLayout>-->
+=======
+        android:layout_gravity="end"
+        android:layout_marginTop="16dp"
+        android:text="Send" />
+
+</LinearLayout>
+>>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
