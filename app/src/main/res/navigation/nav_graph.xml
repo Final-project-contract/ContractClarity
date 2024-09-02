@@ -70,12 +70,11 @@
             app:destination="@id/appFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
-<<<<<<< HEAD
+
         <action
             android:id="@+id/action_profileFragment_to_calendarFragment"
             app:destination="@id/calendarFragment" />
-=======
->>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
+
     </fragment>
 
     <fragment

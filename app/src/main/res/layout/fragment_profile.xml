@@ -56,7 +56,6 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/contractsRecyclerView"
-<<<<<<< HEAD
         android:layout_width="392dp"
         android:layout_height="583dp"
         android:layout_margin="12dp"
@@ -67,24 +66,4 @@
         app:layout_constraintTop_toBottomOf="@+id/contractsLabelTextView"
         app:layout_constraintVertical_bias="1.0" />
 
-=======
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="16dp"
-        android:background="@drawable/gradient_start"
-        app:layout_constraintBottom_toTopOf="@+id/logoutButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/contractsLabelTextView" />
-
-    <Button
-        android:id="@+id/logoutButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Logout"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
->>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
 </androidx.constraintlayout.widget.ConstraintLayout>

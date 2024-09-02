@@ -57,7 +57,6 @@
             <Button
                 android:id="@+id/openContractButton"
                 android:layout_width="0dp"
-<<<<<<< HEAD
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
                 android:layout_weight="1"
@@ -82,17 +81,6 @@
                 android:text="Summary"
                 android:textColor="@color/white" />
 
-            <!--            <Button-->
-            <!--                android:id="@+id/askQuestionButton"-->
-            <!--                android:layout_width="0dp"-->
-            <!--                android:layout_weight="1"-->
-            <!--                android:layout_height="wrap_content"-->
-            <!--                android:layout_marginStart="4dp"-->
-            <!--                android:backgroundTint="@color/navy_blue"-->
-            <!--                android:textColor="@color/white"-->
-            <!--                android:background="@drawable/rounded_button"-->
-            <!--                android:text="Ask" />-->
-
 
             <ImageView
                 android:id="@+id/askQuestionButton"
@@ -104,37 +92,6 @@
                 android:src="@drawable/baseline_bot_24"
                 app:layout_constraintBottom_toBottomOf="@+id/buttonLayout"
                 app:layout_constraintEnd_toEndOf="parent" />
-=======
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:backgroundTint="@color/navy_blue"
-                android:textColor="@color/white"
-                android:background="@drawable/rounded_button"
-                android:text="Open" />
-
-            <Button
-                android:id="@+id/openSummaryButton"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="4dp"
-                android:backgroundTint="@color/navy_blue"
-                android:textColor="@color/white"
-                android:background="@drawable/rounded_button"
-                android:text="Summary" />
-
-            <Button
-                android:id="@+id/askQuestionButton"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:backgroundTint="@color/navy_blue"
-                android:textColor="@color/white"
-                android:background="@drawable/rounded_button"
-                android:text="Ask" />
->>>>>>> e35c2ddb821733de65430bad6afbd1de6a39cafd
 
         </LinearLayout>
 
