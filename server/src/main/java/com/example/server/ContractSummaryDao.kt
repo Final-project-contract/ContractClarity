@@ -9,8 +9,8 @@ class ContractSummaryDao {
     fun create(summary: ContractSummary): Int? {
         return transaction {
             ContractSummaries.insert {
-                it[ContractSummaries.contractId] = summary.contractId
-                it[ContractSummaries.summaryText] = summary.summaryText
+                it[contractId] = summary.contractId
+                it[summaryText] = summary.summaryText
             } get ContractSummaries.id
         }
     }
@@ -30,6 +30,7 @@ class ContractSummaryDao {
             summaryText = row[ContractSummaries.summaryText]
         )
 }
+
 
 data class ContractSummary(
     val id: Int = 0,

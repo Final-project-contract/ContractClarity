@@ -16,7 +16,9 @@
         android:theme="@style/Theme.Final_Project"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
-
+        <activity
+            android:name="com.example.app.QuestionAnswerActivity"
+            android:exported="false" />
         <activity
             android:name="com.example.app.MainAppActivity"
             android:exported="true"
@@ -24,10 +26,10 @@
             android:theme="@style/Theme.Final_Project">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.example.app.SummaryActivity"
             android:exported="false" />
@@ -41,7 +43,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 
 </manifest>

@@ -13,10 +13,12 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class CustomCalendarView @JvmOverloads constructor(
+
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
+    private val importantDates = mutableSetOf<Calendar>()
 
     private val calendar: Calendar = Calendar.getInstance()
     private lateinit var monthYearTextView: TextView
@@ -39,6 +41,14 @@ class CustomCalendarView @JvmOverloads constructor(
 
         setupListeners()
         updateCalendarView()
+    }
+    fun setImportantDates(dates: Set<Long>) {
+        importantDates.clear()
+        dates.forEach { dateInMillis ->
+            val calendar = Calendar.getInstance().apply { timeInMillis = dateInMillis }
+            importantDates.add(calendar)
+        }
+        updateDaysGrid() // Refresh the grid to reflect changes
     }
 
     private fun setupListeners() {
@@ -94,6 +104,19 @@ class CustomCalendarView @JvmOverloads constructor(
     private fun addDayToGrid(text: String, isSelected: Boolean = false, isHeader: Boolean = false) {
         val dayView = LayoutInflater.from(context).inflate(R.layout.calendar_day_view, daysGrid, false) as TextView
         dayView.text = text
+
+        // Check if the current day is an important date
+        if (!isHeader && text.isNotEmpty()) {
+            val day = text.toInt()
+            val dayCalendar = (calendar.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, day) }
+            if (importantDates.any { it.get(Calendar.YEAR) == dayCalendar.get(Calendar.YEAR) &&
+                        it.get(Calendar.MONTH) == dayCalendar.get(Calendar.MONTH) &&
+                        it.get(Calendar.DAY_OF_MONTH) == dayCalendar.get(Calendar.DAY_OF_MONTH) }) {
+                dayView.setBackgroundResource(R.drawable.important_date_background) // Set background for important dates
+                dayView.setTypeface(null, android.graphics.Typeface.BOLD) // Make the text bold
+            }
+        }
+
         if (isSelected) {
             dayView.setBackgroundResource(R.drawable.selected_day_background)
         }
@@ -113,6 +136,7 @@ class CustomCalendarView @JvmOverloads constructor(
         }
         daysGrid.addView(dayView)
     }
+
 
     fun setDate(year: Int, month: Int, dayOfMonth: Int) {
         calendar.set(year, month, dayOfMonth)

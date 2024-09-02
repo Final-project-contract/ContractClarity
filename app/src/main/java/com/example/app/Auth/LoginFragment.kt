@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -44,13 +45,21 @@ class LoginFragment : Fragment() {
 
         buttonLogin.setOnClickListener { loginUser() }
 
+        val textViewSignUp = view.findViewById<TextView>(R.id.textViewSignUp)
+        textViewSignUp.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
+
         return view
     }
 
     private fun loginUser() {
         val email = editTextEmail.text.toString().trim()
         val password = editTextPassword.text.toString().trim()
+        loginWithCredentials(email, password)
+    }
 
+    fun loginWithCredentials(email: String, password: String) {
         if (email.isNotEmpty() && password.isNotEmpty()) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                 try {
@@ -59,13 +68,15 @@ class LoginFragment : Fragment() {
                         contentType(ContentType.Application.Json)
                         setBody("""{"email":"$email","password":"$password"}""")
                     }
+
                     if (response.status.isSuccess()) {
                         val jsonBody = JSONObject(response.bodyAsText())
                         val token = jsonBody.getString("token")
                         tokenManager.saveToken(token)
+
                         withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Login successful", Toast.LENGTH_SHORT).show()
-                            findNavController().navigate(R.id.action_loginFragment_to_profileFragment)
+                            navigateToProfileFragment()
                         }
                     } else {
                         withContext(Dispatchers.Main) {
@@ -82,5 +93,9 @@ class LoginFragment : Fragment() {
         } else {
             Toast.makeText(context, "Please enter email and password", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun navigateToProfileFragment() {
+        findNavController().navigate(R.id.action_loginFragment_to_profileFragment)
     }
 }

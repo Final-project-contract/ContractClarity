@@ -24,5 +24,11 @@ class TokenManager(context: Context) {
 
     fun clearToken() {
         sharedPreferences.edit().remove("jwt_token").apply()
+        // Ensure the change is written synchronously
+        sharedPreferences.edit().commit()
+    }
+
+    fun isTokenPresent(): Boolean {
+        return getToken() != null
     }
 }

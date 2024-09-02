@@ -7,42 +7,46 @@
     tools:context="com.example.app.ProfileFragment">
 
     <!-- Profile Header with Logo and Username Box -->
+
     <ImageView
         android:id="@+id/profileImageView"
         android:layout_width="63dp"
         android:layout_height="68dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="-2dp"
         android:layout_marginTop="24dp"
         android:src="@drawable/baseline_account_circle_24"
         app:layout_constraintBottom_toBottomOf="@id/usernameTextView"
         app:layout_constraintEnd_toStartOf="@id/usernameTextView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.555" />
 
     <TextView
         android:id="@+id/usernameTextView"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="145dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="-88dp"
         android:layout_marginTop="24dp"
+        android:layout_marginEnd="55dp"
         android:background="@drawable/bordered_box"
-        android:padding="12dp"
+        android:padding="3dp"
         android:text="Username Placeholder"
+        android:textAlignment="center"
+        android:textColor="@color/navy_blue"
         android:textSize="22sp"
         android:textStyle="bold"
-        android:textColor="@color/navy_blue"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@id/profileImageView"
+        app:layout_constraintBottom_toBottomOf="@id/profileImageView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/profileImageView" />
+        app:layout_constraintStart_toEndOf="@id/profileImageView"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/contractsLabelTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginStart="124dp"
+        android:layout_marginTop="48dp"
         android:text="Uploaded Contracts"
         android:textColor="@color/navy_blue"
         android:textSize="18sp"
@@ -52,12 +56,14 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/contractsRecyclerView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_margin="16dp"
+        android:layout_width="392dp"
+        android:layout_height="583dp"
+        android:layout_margin="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.437"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/contractsLabelTextView" />
+        app:layout_constraintTop_toBottomOf="@+id/contractsLabelTextView"
+        app:layout_constraintVertical_bias="1.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
