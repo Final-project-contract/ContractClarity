@@ -104,6 +104,11 @@ class CalendarFragment : Fragment() {
                     events.clear()
                     events.addAll(parseCalendarEvents(responseBody))
                     Log.d("CalendarFragment", "Loaded ${events.size} events")
+
+                    // Extract important dates and update the calendar view
+                    val importantDates = events.map { it.date }.toSet()
+                    customCalendarView.setImportantDates(importantDates)
+
                     showEventsForDay(getEventsForSelectedDate())
                 } else {
                     throw Exception("Failed to fetch events: ${response.status}")

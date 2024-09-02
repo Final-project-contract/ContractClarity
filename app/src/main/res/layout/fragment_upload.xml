@@ -95,6 +95,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
+            android:textSize="18sp"
+
             android:text="Summary will appear here"
             android:fontFamily="sans-serif"
             android:background="@drawable/summary_box_background"

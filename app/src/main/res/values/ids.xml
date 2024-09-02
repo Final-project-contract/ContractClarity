@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="action_loginFragment_to_registerFragment" type="id" />
+    <item name="action_logout" type="id" />
+    <item name="messageTextView" type="id" />
+</resources>

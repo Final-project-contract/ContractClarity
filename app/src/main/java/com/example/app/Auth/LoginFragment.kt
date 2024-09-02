@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +44,11 @@ class LoginFragment : Fragment() {
         tokenManager = TokenManager(requireContext())
 
         buttonLogin.setOnClickListener { loginUser() }
+
+        val textViewSignUp = view.findViewById<TextView>(R.id.textViewSignUp)
+        textViewSignUp.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
 
         return view
     }

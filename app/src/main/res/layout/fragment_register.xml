@@ -139,5 +139,17 @@
             android:textColor="@color/navy_blue"
             android:backgroundTint="@color/light_blue"
             app:cornerRadius="8dp"/>
+
+        <TextView
+            android:id="@+id/textViewLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already have an account? Login"
+            android:textColor="@color/light_blue"
+            android:layout_marginTop="24dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/sans_serif_medium"/>
+
     </LinearLayout>
 </ScrollView>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#e1e8f2"/> <!-- Optional: Sets the background color of the drawable -->
+    <stroke
+        android:width="9dp"
+        android:color="@color/navy_blue"/> <!-- Border color -->
+    <corners android:radius="18dp"/> <!-- Border radius -->
+</shape>

@@ -35,6 +35,10 @@
             app:destination="@id/profileFragment"
             app:popUpTo="@id/appFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+
     </fragment>
 
     <fragment
@@ -66,6 +70,11 @@
             app:destination="@id/appFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
+
+        <action
+            android:id="@+id/action_profileFragment_to_calendarFragment"
+            app:destination="@id/calendarFragment" />
+
     </fragment>
 
     <fragment

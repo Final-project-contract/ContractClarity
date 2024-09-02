@@ -15,6 +15,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.final_project.R
@@ -45,6 +46,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+
+
 
 class UploadFragment : Fragment() {
     private lateinit var summaryTextView: TextView
@@ -87,12 +93,12 @@ class UploadFragment : Fragment() {
     }
 
     private fun openFilePicker() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "application/pdf"
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            type = "application/pdf"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
         startActivityForResult(Intent.createChooser(intent, "Select a PDF file"), FILE_PICKER_REQUEST_CODE)
     }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
@@ -115,29 +121,50 @@ class UploadFragment : Fragment() {
         }
         return uri.lastPathSegment ?: "Unknown file"
     }
-
     private fun showCustomFileNameDialog(fileUri: Uri) {
         val builder = AlertDialog.Builder(requireContext())
         val inflater = requireContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val dialogView = inflater.inflate(R.layout.dialog_custom_file_name, null)
-
         val fileNameEditText = dialogView.findViewById<EditText>(R.id.fileNameEditText)
         fileNameEditText.setText(selectedFileName)
 
         builder.setView(dialogView)
             .setPositiveButton("Upload") { _, _ ->
-                val fileName = fileNameEditText.text.toString()
-                selectedFileName = fileName
-                selectedFileTextView.text = "Selected file: $fileName"
-                uploadContractToServer(fileUri, fileName)
+                val fileName = fileNameEditText.text.toString().trim()
+                if (fileName.isNotEmpty()) {
+                    selectedFileName = fileName
+                    selectedFileTextView.text = "Selected file: $fileName"
+                    uploadContractToServer(fileUri, fileName)
+                } else {
+                    Toast.makeText(requireContext(), "File name cannot be empty", Toast.LENGTH_SHORT).show()
+                }
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
 
-        val dialog = builder.create()
-        dialog.show()
+        builder.create().show()
     }
+//    private fun showCustomFileNameDialog(fileUri: Uri) {
+//        val builder = AlertDialog.Builder(requireContext())
+//        val inflater = requireContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+//        val dialogView = inflater.inflate(R.layout.dialog_custom_file_name, null)
+//
+//        val fileNameEditText = dialogView.findViewById<EditText>(R.id.fileNameEditText)
+//        fileNameEditText.setText(selectedFileName)
+//
+//        builder.setView(dialogView)
+//            .setPositiveButton("Upload") { _, _ ->
+//                val fileName = fileNameEditText.text.toString()
+//                selectedFileName = fileName
+//                selectedFileTextView.text = "Selected file: $fileName"
+//                uploadContractToServer(fileUri, fileName)
+//            }
+//            .setNegativeButton("Cancel") { dialog, _ ->
+//                dialog.dismiss()
+//            }
+//
+//        val dialog = builder.create()
+//        dialog.show()
+//    }
 
     private fun uploadContractToServer(fileUri: Uri, fileName: String) {
         lifecycleScope.launch {
@@ -194,20 +221,36 @@ class UploadFragment : Fragment() {
         }
     }
 
+    private fun formatSummaryText(summary: String): SpannableString {
+        val spannableString = SpannableString(summary)
+
+        // Define the color for IMPORTANT DATES
+        val importantDatesColor = ContextCompat.getColor(requireContext(), R.color.navy_blue)
+
+        // Find the start and end indices of IMPORTANT DATES
+        val importantDatesStart = summary.indexOf("IMPORTANT DATES:")
+        if (importantDatesStart != -1) {
+            val span = ForegroundColorSpan(importantDatesColor)
+            spannableString.setSpan(span, importantDatesStart, summary.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
+        return spannableString
+    }
+
     private fun summarizePdf(pdfUri: Uri, context: Context) {
         lifecycleScope.launch {
             try {
                 val inputStream = uriToInputStream(context, pdfUri)
                 val pdfText: String = extractData(inputStream)
-                Log.d("UploadFragment", "Extracted Text: $pdfText")
                 val request = createMessageRequest(pdfText)
                 val response = api.createMessage(request)
                 val summary = response.content.firstOrNull()?.text ?: "No summary available"
 
-                Log.d("UploadFragment", "Summary: $summary")
+                // Format the summary to highlight IMPORTANT DATES
+                val formattedSummary = formatSummaryText(summary)
 
                 activity?.runOnUiThread {
-                    summaryTextView.text = summary
+                    summaryTextView.text = formattedSummary
                     showLoading(false)
                     summaryTextView.visibility = View.VISIBLE
                 }
@@ -221,6 +264,7 @@ class UploadFragment : Fragment() {
             }
         }
     }
+
 
     private suspend fun createCalendarEventsFromSummary(summary: String, contractId: Int?) {
         Log.d("UploadFragment", "Creating calendar events from summary")
@@ -402,20 +446,20 @@ class UploadFragment : Fragment() {
             )
         )
     }
-
     private fun extractData(inputStream: InputStream?): String {
-        try {
-            var extractedText = ""
+        if (inputStream == null) return "Error: Input stream is null"
+        return try {
             val pdfReader = PdfReader(inputStream)
+            val extractedText = StringBuilder()
             val numberOfPages = pdfReader.numberOfPages
             for (i in 1..numberOfPages) {
-                extractedText += PdfTextExtractor.getTextFromPage(pdfReader, i).trim() + "\n"
+                extractedText.append(PdfTextExtractor.getTextFromPage(pdfReader, i).trim()).append("\n")
             }
             pdfReader.close()
-            return extractedText
+            extractedText.toString()
         } catch (e: Exception) {
             Log.e("UploadFragment", "Error extracting PDF text", e)
-            return "Error: ${e.message}"
+            "Error: ${e.message}"
         }
     }
 

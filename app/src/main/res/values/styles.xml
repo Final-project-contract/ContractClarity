@@ -1,5 +1,4 @@
 <resources>
-    <!-- Other existing styles -->
 
     <!-- Bottom Navigation View Style -->
     <style name="BottomNavigationViewStyle" parent="Widget.Design.BottomNavigationView">
@@ -9,4 +8,13 @@
         <item name="itemTextColor">@color/nav_menu_text_color_selector</item> <!-- Text color selector -->
         <item name="elevation">8dp</item> <!-- Shadow effect -->
     </style>
+
+    <style name="CustomDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:shadowColor">@android:color/transparent</item>
+        <item name="android:windowElevation">0dp</item> <!-- Remove shadow elevation -->
+    </style>
+
 </resources>
